@@ -1,0 +1,22 @@
+# Build output directory
+target/
+
+# Version Control
+.git/
+.gitignore
+
+# IDE and Editor files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project/
+
+# Front-end static files (handled by separate Nginx container)
+frontend/
+
+# Miscellaneous
+README.md
+URL_Shortener.postman_collection.json
+*.log

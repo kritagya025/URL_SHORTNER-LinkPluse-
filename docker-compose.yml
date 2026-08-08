@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # 1. PostgreSQL Database Service
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: url_shortener_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: url_shortener_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kritagya
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d url_shortener_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - urlshortener_net
+
+  # ============================================================================
+  # 2. Spring Boot 3 Java Backend Service
+  # ============================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: url_shortener_backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: url_shortener_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: kritagya
+      APP_BASE_URL: http://localhost
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - urlshortener_net
+
+  # ============================================================================
+  # 3. Nginx Static Frontend & Reverse Proxy Service
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: url_shortener_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - urlshortener_net
+
+# ==============================================================================
+# Persistent Named Volumes (Database data survives container recreation)
+# ==============================================================================
+volumes:
+  postgres_data:
+    driver: local
+
+# ==============================================================================
+# Isolated Bridge Network (Container-to-container communication via service names)
+# ==============================================================================
+networks:
+  urlshortener_net:
+    driver: bridge

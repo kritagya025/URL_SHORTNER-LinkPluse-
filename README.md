@@ -1,76 +1,99 @@
-# LinkPulse — URL Shortener & Real-Time Analytics Service
+# 🔗 LinkPulse — Full-Stack URL Shortener & Real-Time Analytics Service
 
-A clean, production-ready, interview-grade **Full-Stack URL Shortener & Analytics Platform** built with **Spring Boot 3**, **Java 17**, **PostgreSQL**, and **Vanilla HTML5/CSS3/JavaScript**.
+[![CI/CD Pipeline](https://github.com/kritagya025/URL_SHORTNER-LinkPluse-/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/kritagya025/URL_SHORTNER-LinkPluse-/actions/workflows/ci-cd.yml)
+![Java 17](https://img.shields.io/badge/Java-17-orange.svg)
+![Spring Boot 3.2.5](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg)
+![Nginx](https://img.shields.io/badge/Nginx-1.25%20Alpine-009639.svg)
+
+A clean, production-ready, interview-grade **Full-Stack URL Shortener & Real-Time Analytics Platform** built with **Spring Boot 3**, **Java 17**, **PostgreSQL 16**, **Docker Compose**, **Nginx**, and an automated **GitHub Actions CI/CD Pipeline**.
 
 ---
 
-## 🌟 Features
+## 🌟 Key Features
 
-- **URL Shortening**: Generates unique, 6-character Base62 short links for long URLs.
-- **HTTP 302 Redirects**: Fast redirection to original destinations while automatically logging clicks.
-- **Click Tracking & Real-Time Analytics**: Tracks visit counts and timestamps in PostgreSQL.
-- **Optional URL Expiration**: Supports setting explicit date/time expiration thresholds. Expired links return HTTP 410 Gone.
-- **URL Management Table**: Simple frontend dashboard displaying all created links, click counters, active/expired status badges, copy-to-clipboard, and link deletion.
-- **Centralized Exception Handling**: Standardized REST error payloads with appropriate HTTP status codes (`400`, `404`, `410`, `500`).
-- **Input Validation**: Spring Bean Validation ensuring valid URL formats and expiration constraints.
+- **⚡ Fast Base62 URL Shortening**: Encodes long URLs into compact 6-character short codes (e.g. `http://localhost/aB72x`).
+- **🔀 HTTP 302 Redirect Engine**: High-performance redirection to destination URLs while logging visit timestamps in real time.
+- **📊 Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards without page refreshes (auto-polling & focus sync).
+- **⏳ Expiration Management**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`.
+- **🎨 Sleek Zinc/Vercel Dark Dashboard**: Clean developer aesthetic featuring real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), and link deletion.
+- **🛡️ Validation & Centralized Error Handling**: Spring Bean Validation enforces URL formats, while `@RestControllerAdvice` standardizes JSON error responses.
+- **🐳 Multi-Container Docker Architecture**: Fully containerized setup featuring multi-stage Java builds, Nginx reverse proxying, and persistent PostgreSQL storage volumes.
+- **🔄 Automated CI/CD Pipeline**: GitHub Actions workflow automatically compiles code, runs JUnit 5 tests, validates frontend assets, builds Docker images, and publishes versioned tags to Docker Hub.
 
 ---
 
 ## 🛠️ Technology Stack
 
-### Frontend
-- **HTML5** & **Vanilla CSS3** (Sleek dark mode glassmorphism design system)
-- **Vanilla JavaScript (ES6+)** with **Fetch API**
-
-### Backend
-- **Java 17** / **Spring Boot 3.2.5**
-- **Spring Web (REST APIs)**
-- **Spring Data JPA** & **PostgreSQL**
-- **HikariCP** Connection Pooling
-- **Lombok** & **Bean Validation**
-- **JUnit 5** & **Spring Boot Test / MockMvc**
+| Layer | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend UI** | HTML5, Vanilla CSS3, JavaScript (ES6+) | Zinc dark theme dashboard with real-time auto-polling & search filtering |
+| **Web Server** | Nginx 1.25 Alpine | Serves static frontend assets and reverse-proxies `/api/` traffic |
+| **Backend Framework**| Java 17 / Spring Boot 3.2.5 | REST Controllers, Service Layer, Exception Handling, Data JPA |
+| **Database** | PostgreSQL 16 | Relational persistence with indexed short-code lookups |
+| **Connection Pool** | HikariCP | High-performance database connection management |
+| **Testing** | JUnit 5 & MockMvc | Unit testing and controller integration testing suite |
+| **Containerization** | Docker & Docker Compose | Multi-stage container builds & network orchestration |
+| **CI/CD Pipeline** | GitHub Actions | Automated build, test, Docker image building, and Docker Hub registry publishing |
 
 ---
 
 ## 🏛️ System Architecture
 
 ```text
-               USER (Web Browser)
-                       |
-                       ↓
-                   FRONTEND
-             HTML / CSS / JavaScript
-                       |
-                   HTTP / REST
-                       |
-                       ↓
-               SPRING BOOT API (8080)
-            ┌──────────┴──────────┐
-            ↓                     ↓
-    RedirectController      UrlController
-            │                     │
-            └──────────┬──────────┘
-                       ↓
-                   UrlService
-                       |
-                       ↓
-                 UrlRepository
-                       |
-                       ↓
-             PostgreSQL Database (5432)
+                                  Browser
+                                     |
+                                     ↓
+                            http://localhost:80
+                                     |
+                                     ↓
+                          Nginx Container (Frontend)
+                       [url_shortener_frontend : Port 80]
+                                     |
+                             Docker Network
+                          (urlshortener_net)
+                                     |
+                                     ↓
+                       Spring Boot Container (Backend)
+                       [url_shortener_backend : Port 8080]
+                                     |
+                             Docker Network
+                          (urlshortener_net)
+                                     |
+                                     ↓
+                        PostgreSQL Container (Database)
+                       [url_shortener_postgres : Port 5432]
+                                     |
+                                     ↓
+                             Persistent Volume
+                           (postgres_data)
 ```
 
 ---
 
-## 🗄️ Database Schema
+## 🗄️ Database Schema & Indexing
 
 ### Table: `urls`
+
+```sql
+CREATE TABLE urls (
+    id           BIGSERIAL PRIMARY KEY,
+    original_url TEXT NOT NULL,
+    short_code   VARCHAR(10) NOT NULL UNIQUE,
+    click_count  BIGINT NOT NULL DEFAULT 0,
+    created_at   TIMESTAMP NOT NULL,
+    expires_at   TIMESTAMP NULL
+);
+
+CREATE UNIQUE INDEX idx_urls_short_code ON urls(short_code);
+```
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `BIGINT` | `PRIMARY KEY`, Auto-Increment | Unique primary identifier |
-| `original_url` | `TEXT` | `NOT NULL` | Destination URL |
-| `short_code` | `VARCHAR(10)` | `NOT NULL`, `UNIQUE`, `INDEX` | Indexed short alphanumeric code |
+| `original_url` | `TEXT` | `NOT NULL` | Destination long URL |
+| `short_code` | `VARCHAR(10)` | `NOT NULL`, `UNIQUE`, `INDEX` | Indexed 6-character Base62 code |
 | `click_count` | `BIGINT` | `NOT NULL`, Default `0` | Total redirected visits counter |
 | `created_at` | `TIMESTAMP` | `NOT NULL` | Creation timestamp |
 | `expires_at` | `TIMESTAMP` | `NULLABLE` | Optional expiration timestamp |
@@ -82,68 +105,111 @@ A clean, production-ready, interview-grade **Full-Stack URL Shortener & Analytic
 | Method | Endpoint | Description | Request Body | Response Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **POST** | `/api/urls` | Create short URL | `{ originalUrl, expiresAt }` | `201 Created` |
-| **GET** | `/{shortCode}` | Redirect to original URL | None | `302 Found` |
-| **GET** | `/api/urls/{shortCode}/stats` | Get link statistics | None | `200 OK` |
+| **GET** | `/{shortCode}` | Redirect to original URL | None | `302 Found` (or `410 Gone`) |
+| **GET** | `/api/urls/{shortCode}/stats` | Get link statistics | None | `200 OK` (or `404 Not Found`) |
 | **GET** | `/api/urls` | List all created URLs | None | `200 OK` |
 | **DELETE**| `/api/urls/{shortCode}` | Delete short URL | None | `204 No Content` |
 
 ---
 
-## 🚀 How to Run Locally
+## 🚀 Quickstart & Execution Methods
 
-### 1. PostgreSQL Database Setup
-1. Ensure PostgreSQL is installed and running on `localhost:5432`.
-2. Connect to PostgreSQL using `psql` or pgAdmin:
+### Option A: Run with Docker Compose (Recommended)
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/kritagya025/URL_SHORTNER-LinkPluse-.git
+   cd URL_SHORTNER-LinkPluse-
+   ```
+2. Build and start all 3 containerized services (`postgres`, `backend`, `frontend`):
+   ```bash
+   docker compose up --build -d
+   ```
+3. Access the dashboard at **[http://localhost:80](http://localhost:80)**.
+4. Stop containers while preserving database data:
+   ```bash
+   docker compose down
+   ```
+
+---
+
+### Option B: Run Locally Without Docker
+
+1. Start local PostgreSQL on port `5432` and create the database:
    ```sql
    CREATE DATABASE url_shortener_db;
    ```
-3. Update `src/main/resources/application.properties` with your PostgreSQL password if different:
+2. Configure credentials in `src/main/resources/application.properties`:
    ```properties
    spring.datasource.username=postgres
    spring.datasource.password=kritagya
    ```
-
-### 2. Start Backend (Spring Boot)
-Open a terminal in the root project directory:
-```bash
-mvn spring-boot:run
-```
-The backend API will start at `http://localhost:8080`.
-
-### 3. Open Frontend
-You can launch the frontend using VS Code Live Server or python HTTP server:
-```bash
-cd frontend
-python -m http.server 5500
-```
-Open `http://localhost:5500` in your web browser!
+3. Run the Spring Boot application:
+   ```bash
+   mvn spring-boot:run
+   ```
+4. Access the web dashboard at **[http://localhost:8080](http://localhost:8080)**.
 
 ---
 
-## 🧪 Running Automated Tests
+## 🔄 GitHub Actions CI/CD Pipeline
 
-To execute the test suite (16 Unit & Controller Integration tests):
+```text
+                    Developer (git push / PR)
+                               |
+                               ↓
+                     GitHub Repository (main)
+                               |
+                               ↓
+                    GitHub Actions Runner
+                       (ubuntu-latest)
+                               |
+          ┌────────────────────┴────────────────────┐
+          ↓                                         ↓
+   Job 1: ci-backend                        Job 2: ci-frontend
+   - Checkout Repository                    - Checkout Repository
+   - Setup Java 17 & Maven                  - Verify static web assets
+   - Compile & Run JUnit 5 Tests            - Validate Nginx config
+          |                                         |
+          └────────────────────┬────────────────────┘
+                               |
+                               ↓ (Only if Job 1 & 2 PASS)
+                     Job 3: cd-docker-hub
+                     - Login to Docker Hub via GitHub Secrets
+                     - Build Backend & Frontend Docker Images
+                     - Tag with `latest` & Git Commit SHA (`${{ github.sha }}`)
+                     - Push Images to Docker Hub Registry
+```
+
+### GitHub Repository Secrets Setup
+
+To enable automated Docker Hub publishing:
+1. Open repository settings: **Settings → Secrets and variables → Actions**.
+2. Add secrets:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username.
+   - `DOCKERHUB_TOKEN`: Personal Access Token from Docker Hub.
+
+---
+
+## 🧪 Testing Suite & Postman Collection
+
+### Automated Tests
+Run unit tests and controller integration tests using Maven:
 ```bash
 mvn test
 ```
 
----
-
-## 📬 Postman Testing
-
-Import `URL_Shortener.postman_collection.json` into Postman to test pre-configured endpoints:
+### Postman Collection
+Import `URL_Shortener.postman_collection.json` into Postman to test pre-configured API requests:
 - Create URL
-- Get All URLs
-- Redirect Short URL
-- Get URL Statistics
+- Redirect Short Code
+- Get Statistics
+- List All URLs
 - Delete Short URL
-- Validation Error Handling
-- Expired URL Handling
+- Validation Error Scenarios
+- Expired Link Scenarios
 
 ---
 
-## 🔮 Future Improvements (Part 2 & Part 3)
-
-The following deployment & containerization features will be added in upcoming project parts:
-- [ ] **Part 2**: Dockerization (`Dockerfile` for Spring Boot & Frontend, `docker-compose.yml` orchestrating PostgreSQL, Backend, and Frontend containers).
-- [ ] **Part 3**: GitHub Actions CI/CD pipeline (automated build, test, and containerized deployment).
+## 📜 License
+This project is open-source and available under the [MIT License](LICENSE).
