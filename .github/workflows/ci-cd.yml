@@ -8,7 +8,7 @@
 name: LinkPulse CI/CD Pipeline
 
 # ------------------------------------------------------------------------------
-# 1. Triggers: When should this workflow execute?
+# 1. Triggers: Execute pipeline on push to main or pull requests
 # ------------------------------------------------------------------------------
 on:
   push:
@@ -17,7 +17,7 @@ on:
     branches: [ "main" ]
 
 # ------------------------------------------------------------------------------
-# 2. Jobs: Parallel or sequential execution blocks
+# 2. Jobs: Automated testing & container delivery jobs
 # ------------------------------------------------------------------------------
 jobs:
 
@@ -29,11 +29,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1.1: Download repository source code onto the GitHub Actions runner
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # Step 1.2: Set up Java 17 JDK with Maven dependency caching
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -41,7 +39,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Step 1.3: Compile Java source code and run all JUnit 5 tests
       - name: Build with Maven & Run Unit Tests
         run: mvn clean test -B
 
@@ -53,11 +50,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 2.1: Checkout repository source code
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # Step 2.2: Verify required static web files exist
       - name: Check Static Web Files
         run: |
           test -f frontend/index.html || (echo "Error: frontend/index.html missing" && exit 1)
@@ -66,15 +61,12 @@ jobs:
           test -f frontend/nginx.conf || (echo "Error: frontend/nginx.conf missing" && exit 1)
           echo "All frontend static files and Nginx configs verified successfully."
 
-      # Step 2.3: Test build of Nginx Docker image
       - name: Validate Frontend Nginx Docker Build
         run: docker build -t test-frontend ./frontend
 
   # ============================================================================
   # JOB 3: Continuous Delivery — Build & Publish Docker Images to Docker Hub
   # ============================================================================
-  # Safety Rule: This job ONLY runs if BOTH Job 1 and Job 2 succeeded,
-  # AND if the commit was pushed to the main branch.
   publish-docker-hub:
     name: Build & Push Docker Images to Docker Hub
     runs-on: ubuntu-latest
@@ -82,39 +74,38 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      # Step 3.1: Checkout source code
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # Step 3.2: Set up Docker Buildx for enhanced container building
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3.3: Authenticate with Docker Hub using repository secrets
+      # Log in to Docker Hub if secret credentials are configured
       - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 3.4: Build and push Spring Boot Backend image
+      # Build and push Spring Boot Backend image (or build only if secrets omitted)
       - name: Build & Push Backend Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/url-shortener-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/url-shortener-backend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-backend:${{ github.sha }}
 
-      # Step 3.5: Build and push Nginx Frontend image
+      # Build and push Nginx Frontend image (or build only if secrets omitted)
       - name: Build & Push Frontend Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: true
+          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/url-shortener-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/url-shortener-frontend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-frontend:${{ github.sha }}
