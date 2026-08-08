@@ -28,7 +28,6 @@ jobs:
     name: Build & Test Spring Boot Backend
     runs-on: ubuntu-latest
 
-    # Service container for PostgreSQL required during backend integration tests
     services:
       postgres:
         image: postgres:16-alpine
@@ -116,8 +115,8 @@ jobs:
           file: ./Dockerfile
           push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-backend:${{ github.sha }}
+            kritagya025/url-shortener-backend:latest
+            kritagya025/url-shortener-backend:${{ github.sha }}
 
       - name: Build & Push Frontend Docker Image
         uses: docker/build-push-action@v6
@@ -126,5 +125,5 @@ jobs:
           file: ./frontend/Dockerfile
           push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME || 'kritagya025' }}/url-shortener-frontend:${{ github.sha }}
+            kritagya025/url-shortener-frontend:latest
+            kritagya025/url-shortener-frontend:${{ github.sha }}
