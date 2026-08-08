@@ -1,4 +1,4 @@
-# 🔗 LinkPulse — Full-Stack URL Shortener & Real-Time Analytics Service
+# LinkPulse — Full-Stack URL Shortener & Real-Time Analytics Service
 
 [![CI/CD Pipeline](https://github.com/kritagya025/URL_SHORTNER-LinkPluse-/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/kritagya025/URL_SHORTNER-LinkPluse-/actions/workflows/ci-cd.yml)
 ![Java 17](https://img.shields.io/badge/Java-17-orange.svg)
@@ -7,28 +7,28 @@
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg)
 ![Nginx](https://img.shields.io/badge/Nginx-1.25%20Alpine-009639.svg)
 
-A clean, production-ready, interview-grade **Full-Stack URL Shortener & Real-Time Analytics Platform** built with **Spring Boot 3**, **Java 17**, **PostgreSQL 16**, **Docker Compose**, **Nginx**, and an automated **GitHub Actions CI/CD Pipeline**.
+LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Real-Time Analytics Platform** built using **Spring Boot 3**, **Java 17**, **PostgreSQL 16**, **Docker Compose**, **Nginx**, and an automated **GitHub Actions CI/CD Pipeline**.
 
 ---
 
-## 🌟 Key Features
+## Overview
 
-- **⚡ Fast Base62 URL Shortening**: Encodes long URLs into compact 6-character short codes (e.g. `http://localhost/aB72x`).
-- **🔀 HTTP 302 Redirect Engine**: High-performance redirection to destination URLs while logging visit timestamps in real time.
-- **📊 Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards without page refreshes (auto-polling & focus sync).
-- **⏳ Expiration Management**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`.
-- **🎨 Sleek Zinc/Vercel Dark Dashboard**: Clean developer aesthetic featuring real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), and link deletion.
-- **🛡️ Validation & Centralized Error Handling**: Spring Bean Validation enforces URL formats, while `@RestControllerAdvice` standardizes JSON error responses.
-- **🐳 Multi-Container Docker Architecture**: Fully containerized setup featuring multi-stage Java builds, Nginx reverse proxying, and persistent PostgreSQL storage volumes.
-- **🔄 Automated CI/CD Pipeline**: GitHub Actions workflow automatically compiles code, runs JUnit 5 tests, validates frontend assets, builds Docker images, and publishes versioned tags to Docker Hub.
+- **Base62 URL Shortening**: Encodes long URLs into compact 6-character short codes (e.g. `http://localhost/aB72x`).
+- **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time.
+- **Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards without page refreshes.
+- **Expiration Management**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`.
+- **Developer Dark Dashboard**: Clean developer aesthetic featuring real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), and link deletion.
+- **Input Validation & Error Handling**: Spring Bean Validation enforces URL formats, while `@RestControllerAdvice` standardizes JSON error responses.
+- **Multi-Container Docker Architecture**: Containerized setup featuring multi-stage Java builds, Nginx reverse proxying, and persistent PostgreSQL storage volumes.
+- **Automated CI/CD Pipeline**: GitHub Actions workflow automatically compiles code, runs JUnit 5 tests, validates frontend assets, and builds Docker images.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
-| **Frontend UI** | HTML5, Vanilla CSS3, JavaScript (ES6+) | Zinc dark theme dashboard with real-time auto-polling & search filtering |
+| **Frontend UI** | HTML5, Vanilla CSS3, JavaScript (ES6+) | Dark theme dashboard with real-time auto-polling & search filtering |
 | **Web Server** | Nginx 1.25 Alpine | Serves static frontend assets and reverse-proxies `/api/` traffic |
 | **Backend Framework**| Java 17 / Spring Boot 3.2.5 | REST Controllers, Service Layer, Exception Handling, Data JPA |
 | **Database** | PostgreSQL 16 | Relational persistence with indexed short-code lookups |
@@ -39,7 +39,7 @@ A clean, production-ready, interview-grade **Full-Stack URL Shortener & Real-Tim
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```text
                                   Browser
@@ -72,7 +72,7 @@ A clean, production-ready, interview-grade **Full-Stack URL Shortener & Real-Tim
 
 ---
 
-## 🗄️ Database Schema & Indexing
+## Database Schema & Indexing
 
 ### Table: `urls`
 
@@ -100,7 +100,7 @@ CREATE UNIQUE INDEX idx_urls_short_code ON urls(short_code);
 
 ---
 
-## 🔌 REST API Endpoints
+## REST API Endpoints
 
 | Method | Endpoint | Description | Request Body | Response Status |
 | :--- | :--- | :--- | :--- | :--- |
@@ -112,7 +112,7 @@ CREATE UNIQUE INDEX idx_urls_short_code ON urls(short_code);
 
 ---
 
-## 🚀 Quickstart & Execution Methods
+## Getting Started
 
 ### Option A: Run with Docker Compose (Recommended)
 
@@ -121,11 +121,11 @@ CREATE UNIQUE INDEX idx_urls_short_code ON urls(short_code);
    git clone https://github.com/kritagya025/URL_SHORTNER-LinkPluse-.git
    cd URL_SHORTNER-LinkPluse-
    ```
-2. Build and start all 3 containerized services (`postgres`, `backend`, `frontend`):
+2. Build and start all services (`postgres`, `backend`, `frontend`):
    ```bash
    docker compose up --build -d
    ```
-3. Access the dashboard at **[http://localhost:80](http://localhost:80)**.
+3. Open `http://localhost:80` in your web browser.
 4. Stop containers while preserving database data:
    ```bash
    docker compose down
@@ -148,11 +148,11 @@ CREATE UNIQUE INDEX idx_urls_short_code ON urls(short_code);
    ```bash
    mvn spring-boot:run
    ```
-4. Access the web dashboard at **[http://localhost:8080](http://localhost:8080)**.
+4. Open `http://localhost:8080` in your web browser.
 
 ---
 
-## 🔄 GitHub Actions CI/CD Pipeline
+## GitHub Actions CI/CD Pipeline
 
 ```text
                     Developer (git push / PR)
@@ -181,7 +181,7 @@ CREATE UNIQUE INDEX idx_urls_short_code ON urls(short_code);
                      - Push Images to Docker Hub Registry
 ```
 
-### GitHub Repository Secrets Setup
+### GitHub Secrets Setup
 
 To enable automated Docker Hub publishing:
 1. Open repository settings: **Settings → Secrets and variables → Actions**.
@@ -191,7 +191,7 @@ To enable automated Docker Hub publishing:
 
 ---
 
-## 🧪 Testing Suite & Postman Collection
+## Testing & Verification
 
 ### Automated Tests
 Run unit tests and controller integration tests using Maven:
@@ -208,8 +208,3 @@ Import `URL_Shortener.postman_collection.json` into Postman to test pre-configur
 - Delete Short URL
 - Validation Error Scenarios
 - Expired Link Scenarios
-
----
-
-## 📜 License
-This project is open-source and available under the [MIT License](LICENSE).
