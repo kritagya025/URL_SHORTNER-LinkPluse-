@@ -1,0 +1,197 @@
+{
+	"info": {
+		"_postman_id": "7a39d332-9b21-4d3f-8a21-123456789abc",
+		"name": "URL Shortener & Analytics API",
+		"description": "Postman collection testing all Part 1 REST API endpoints for URL Shortener & Analytics Service.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Short URL (Valid)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"originalUrl\": \"https://www.example.com/very/long/destination/url\",\n  \"expiresAt\": \"2028-12-31T23:59:59\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/urls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All URLs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Redirect Short URL (Increment Click)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/:shortCode",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						":shortCode"
+					],
+					"variable": [
+						{
+							"key": "shortCode",
+							"value": "aB72x"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get URL Statistics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls/:shortCode/stats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls",
+						":shortCode",
+						"stats"
+					],
+					"variable": [
+						{
+							"key": "shortCode",
+							"value": "aB72x"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Short URL",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls/:shortCode",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls",
+						":shortCode"
+					],
+					"variable": [
+						{
+							"key": "shortCode",
+							"value": "aB72x"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validation Error (Blank URL)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"originalUrl\": \"\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/urls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Expired URL Test",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"originalUrl\": \"https://example.com\",\n  \"expiresAt\": \"2020-01-01T00:00:00\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/urls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
