@@ -1,24 +1,11 @@
-# ==============================================================================
-# LinkPulse — Automated CI/CD Pipeline (GitHub Actions)
-# ==============================================================================
-# Purpose: Compile code, run JUnit 5 backend tests against PostgreSQL service,
-# validate frontend assets, build Docker images, and publish to Docker Hub.
-# ==============================================================================
-
 name: LinkPulse CI/CD Pipeline
 
-# ------------------------------------------------------------------------------
-# 1. Triggers: Execute pipeline on push to main or pull requests
-# ------------------------------------------------------------------------------
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# ------------------------------------------------------------------------------
-# 2. Jobs: Automated testing & container delivery jobs
-# ------------------------------------------------------------------------------
 jobs:
 
   # ============================================================================
@@ -86,10 +73,10 @@ jobs:
         run: docker build -t test-frontend ./frontend
 
   # ============================================================================
-  # JOB 3: Continuous Delivery — Build & Publish Docker Images to Docker Hub
+  # JOB 3: Continuous Delivery — Build Docker Container Images
   # ============================================================================
-  publish-docker-hub:
-    name: Build & Push Docker Images to Docker Hub
+  build-docker-images:
+    name: Build Docker Container Images
     runs-on: ubuntu-latest
     needs: [build-and-test-backend, validate-frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -101,29 +88,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build & Push Backend Docker Image
+      - name: Build Backend Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-          tags: |
-            kritagya025/url-shortener-backend:latest
-            kritagya025/url-shortener-backend:${{ github.sha }}
+          push: false
+          tags: kritagya025/url-shortener-backend:latest
 
-      - name: Build & Push Frontend Docker Image
+      - name: Build Frontend Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-          tags: |
-            kritagya025/url-shortener-frontend:latest
-            kritagya025/url-shortener-frontend:${{ github.sha }}
+          push: false
+          tags: kritagya025/url-shortener-frontend:latest
