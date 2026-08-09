@@ -38,6 +38,15 @@ services:
       - key: APP_BASE_URL
         value: https://linkpulse-backend-thkr.onrender.com
 
+  # ============================================================================
+  # Static Frontend Dashboard Web Site
+  # ============================================================================
+  - type: static
+    name: linkpulse-frontend
+    rootDir: frontend
+    buildCommand: ""
+    publishDir: .
+
 databases:
   # ============================================================================
   # Managed PostgreSQL Database

@@ -1,5 +1,9 @@
 // Configuration: Backend API Base URL
-const API_BASE_URL = window.location.origin.includes('5500') ? 'http://localhost:8080' : window.location.origin;
+const API_BASE_URL = (window.location.origin.includes('5500') || window.location.origin.includes('8080'))
+    ? 'http://localhost:8080'
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? window.location.origin
+        : 'https://linkpulse-backend-thkr.onrender.com';
 
 // State management
 let allUrls = [];
