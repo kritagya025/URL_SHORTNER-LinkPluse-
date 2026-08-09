@@ -73,10 +73,10 @@ jobs:
         run: docker build -t test-frontend ./frontend
 
   # ============================================================================
-  # JOB 3: Continuous Delivery — Build Docker Container Images
+  # JOB 3: Continuous Delivery — Build & Push Docker Images to Docker Hub
   # ============================================================================
   build-docker-images:
-    name: Build Docker Container Images
+    name: Build & Push Docker Images
     runs-on: ubuntu-latest
     needs: [build-and-test-backend, validate-frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -88,18 +88,29 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Backend Docker Image
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Backend Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: false
-          tags: kritagya025/url-shortener-backend:latest
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-backend:${{ github.sha }}
 
-      - name: Build Frontend Docker Image
+      - name: Build & Push Frontend Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: false
-          tags: kritagya025/url-shortener-frontend:latest
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-frontend:${{ github.sha }}
+
