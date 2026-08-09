@@ -62,12 +62,17 @@ tableSearch.addEventListener('input', handleTableSearch);
 // Create Short URL Handler
 async function handleCreateShortUrl(e) {
     e.preventDefault();
-    const originalUrl = originalUrlInput.value.trim();
+    let originalUrl = originalUrlInput.value.trim();
     const expiresAtRaw = expiresAtInput.value;
 
     if (!originalUrl) {
         showToast('Please enter a destination URL', 'error');
         return;
+    }
+
+    // Auto-prepend https:// if URL scheme is missing
+    if (!/^https?:\/\//i.test(originalUrl)) {
+        originalUrl = 'https://' + originalUrl;
     }
 
     let expiresAt = null;
