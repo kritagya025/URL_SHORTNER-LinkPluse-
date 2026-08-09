@@ -44,8 +44,7 @@ services:
   - type: static
     name: linkpulse-frontend
     rootDir: frontend
-    buildCommand: ""
-    publishDir: .
+    staticPublishPath: .
 
 databases:
   # ============================================================================
