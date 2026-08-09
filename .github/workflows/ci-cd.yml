@@ -114,3 +114,9 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-frontend:${{ github.sha }}
 
+      - name: Trigger Render Backend Deployment
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: |
+          echo "Triggering Render CD Deployment..."
+          curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
+
