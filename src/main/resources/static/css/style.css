@@ -670,9 +670,132 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* ==========================================================================
+   Responsive Design (Tablets, Mobile Devices & Small Screens)
+   ========================================================================== */
+
 @media (max-width: 850px) {
-    .workspace-grid { grid-template-columns: 1fr; }
-    .hero-heading { font-size: 1.8rem; }
-    .metrics-bar { flex-direction: column; gap: 0.75rem; }
-    .metric-sep { width: 100%; height: 1px; }
+    .workspace-grid { 
+        grid-template-columns: 1fr; 
+    }
+    .hero-heading { 
+        font-size: 1.85rem; 
+    }
+    .metrics-bar { 
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem 1.25rem;
+    }
+    .metric-sep { 
+        display: none; 
+    }
+}
+
+@media (max-width: 640px) {
+    .app-layout {
+        padding: 1.25rem 0.85rem;
+        gap: 1.25rem;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .tech-tags {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .hero {
+        margin: 0.5rem 0;
+        gap: 0.5rem;
+    }
+
+    .hero-heading {
+        font-size: 1.5rem;
+    }
+
+    .hero-subheading {
+        font-size: 0.88rem;
+    }
+
+    .metrics-bar {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+
+    .panel {
+        padding: 1.15rem;
+    }
+
+    .result-body {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .result-body .btn {
+        width: 100%;
+    }
+
+    .search-bar {
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .search-bar .btn {
+        width: 100%;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cell-full {
+        grid-column: span 1;
+    }
+
+    .table-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .toolbar-right {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 0.6rem;
+    }
+
+    .filter-wrapper {
+        width: 100%;
+    }
+
+    .filter-wrapper input {
+        width: 100%;
+    }
+
+    .toolbar-right .btn {
+        width: 100%;
+    }
+
+    .action-group {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .toast-container {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+    }
+
+    .toast {
+        width: 100%;
+    }
 }
