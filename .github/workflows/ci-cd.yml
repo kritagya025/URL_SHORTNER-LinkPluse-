@@ -21,7 +21,7 @@ jobs:
         env:
           POSTGRES_DB: url_shortener_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: kritagya
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
@@ -42,13 +42,13 @@ jobs:
           cache: maven
 
       - name: Build with Maven & Run Unit Tests
-        run: mvn clean test -B
+        run: mvn clean verify -B
         env:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: url_shortener_db
           DB_USERNAME: postgres
-          DB_PASSWORD: kritagya
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   # ============================================================================
   # JOB 2: Continuous Integration — Frontend Assets & Nginx Config Validation
