@@ -41,9 +41,11 @@ services:
   # ============================================================================
   # Static Frontend Dashboard Web Site
   # ============================================================================
-  - type: static
+  - type: web
     name: linkpulse-frontend
+    runtime: static
     rootDir: frontend
+    buildCommand: ""
     staticPublishPath: .
 
 databases:
