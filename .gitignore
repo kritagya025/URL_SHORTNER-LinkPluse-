@@ -64,6 +64,8 @@ replay_pid*
 *.env
 .env.*
 !.env.example
+*.sql
+*.dump
 
 # ==============================================================================
 # Docker (local build caches)
