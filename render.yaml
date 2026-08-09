@@ -1,0 +1,48 @@
+# ==============================================================================
+# Render Blueprint — LinkPulse Backend Deployment
+# https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  # ============================================================================
+  # Spring Boot Backend Web Service (Docker Hub Image)
+  # ============================================================================
+  - type: web
+    name: linkpulse-backend
+    runtime: image
+    image:
+      url: docker.io/dockritagya/linkpulse-backend:latest
+    plan: free
+    envVars:
+      # Render injects PORT automatically; Spring Boot reads it via ${PORT:8080}
+      - key: DB_HOST
+        fromDatabase:
+          name: linkpulse-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: linkpulse-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: linkpulse-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: linkpulse-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: linkpulse-db
+          property: password
+      - key: APP_BASE_URL
+        value: https://linkpulse-backend.onrender.com
+
+databases:
+  # ============================================================================
+  # Managed PostgreSQL Database
+  # ============================================================================
+  - name: linkpulse-db
+    plan: free
+    databaseName: linkpulse_db
+    user: linkpulse_user
