@@ -115,8 +115,13 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/linkpulse-frontend:${{ github.sha }}
 
       - name: Trigger Render Backend Deployment
-        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          echo "Triggering Render CD Deployment..."
-          curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Triggering Render CD Deployment..."
+            curl -s "$RENDER_DEPLOY_HOOK"
+          else
+            echo "RENDER_DEPLOY_HOOK secret is not configured. Skipping deploy hook trigger."
+          fi
 
