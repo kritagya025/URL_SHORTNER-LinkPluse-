@@ -105,7 +105,7 @@ async function handleCreateShortUrl(e) {
         loadAllUrls();
 
     } catch (err) {
-        showToast(err.message, 'error');
+        showToast(getErrorMessage(err), 'error');
     } finally {
         setLoading(false);
     }
@@ -145,7 +145,7 @@ async function handleGetStats(isSilent = false) {
         if (!isSilent) {
             statsDisplay.classList.add('hidden');
             statsPlaceholder.classList.remove('hidden');
-            showToast(err.message, 'error');
+            showToast(getErrorMessage(err), 'error');
         }
     }
 }
@@ -258,7 +258,7 @@ async function deleteUrl(shortCode) {
         showToast(`Deleted link '${shortCode}'`, 'success');
         loadAllUrls();
     } catch (err) {
-        showToast(err.message, 'error');
+        showToast(getErrorMessage(err), 'error');
     }
 }
 
@@ -335,4 +335,12 @@ function escapeHtml(str) {
             '"': '&quot;'
         }[tag] || tag)
     );
+}
+
+// Detect network/backend-down errors and return a professional message
+function getErrorMessage(err) {
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        return 'Backend is temporarily unavailable. Please try again later.';
+    }
+    return err.message || 'An unexpected error occurred.';
 }
