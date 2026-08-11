@@ -1,28 +1,9 @@
 // Configuration: Backend API Base URL
-// When running inside Docker (Nginx container on port 80), API requests use relative origin (Nginx proxies /api/ -> backend:8080).
-// When running served by Spring Boot directly on 8080, API requests target localhost:8080.
-// When running from any static dev server (Live Server, http-server, etc.), target http://localhost:8080 directly.
-// When running deployed on Render, target the Render backend URL.
-const SPRING_BOOT_LOCAL_URL = 'http://localhost:8080';
-
-const API_BASE_URL = (() => {
-    const origin = window.location.origin;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-
-    // Deployed on Render (not localhost/local network)
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('192.168.')) {
-        return 'https://linkpulse-backend-thkr.onrender.com';
-    }
-
-    // Docker Nginx proxy on port 80, or Spring Boot embedded static server on port 8080
-    if (port === '' || port === '80' || port === '8080') {
-        return origin;
-    }
-
-    // Served from any other local port (e.g. 5500, 8090, 8091) or file:// protocol
-    return SPRING_BOOT_LOCAL_URL;
-})();
+const API_BASE_URL = (window.location.origin.includes('5500') || window.location.origin.includes('8080'))
+    ? 'http://localhost:8080'
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? window.location.origin
+        : 'https://linkpulse-backend-thkr.onrender.com';
 
 // State management
 let allUrls = [];
@@ -57,11 +38,6 @@ const tableSearch = document.getElementById('table-search');
 const tableUrlCount = document.getElementById('table-url-count');
 const toastContainer = document.getElementById('toast-container');
 
-// Backend Status Badge Elements
-const backendStatusBadge = document.getElementById('backend-status-badge');
-const backendStatusDot = document.getElementById('backend-status-dot');
-const backendStatusText = document.getElementById('backend-status-text');
-
 // Overview Counters
 const overviewTotalUrls = document.getElementById('overview-total-urls');
 const overviewTotalClicks = document.getElementById('overview-total-clicks');
@@ -69,19 +45,13 @@ const overviewActiveUrls = document.getElementById('overview-active-urls');
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    checkBackendStatus();
     loadAllUrls();
-    // Refresh URLs every 3s
+    // Real-Time Polling: Refresh click counts and metrics every 3 seconds
     setInterval(loadAllUrls, 3000);
-    // Periodically check backend health every 10s
-    setInterval(checkBackendStatus, 10000);
 });
 
 // Auto-refresh when switching back to the dashboard tab
-window.addEventListener('focus', () => {
-    checkBackendStatus();
-    loadAllUrls();
-});
+window.addEventListener('focus', loadAllUrls);
 
 shortenForm.addEventListener('submit', handleCreateShortUrl);
 copyBtn.addEventListener('click', () => copyToClipboard(resultShortUrl.textContent));
@@ -135,7 +105,7 @@ async function handleCreateShortUrl(e) {
         loadAllUrls();
 
     } catch (err) {
-        showToast(getErrorMessage(err), 'error');
+        showToast(err.message, 'error');
     } finally {
         setLoading(false);
     }
@@ -175,7 +145,7 @@ async function handleGetStats(isSilent = false) {
         if (!isSilent) {
             statsDisplay.classList.add('hidden');
             statsPlaceholder.classList.remove('hidden');
-            showToast(getErrorMessage(err), 'error');
+            showToast(err.message, 'error');
         }
     }
 }
@@ -288,7 +258,7 @@ async function deleteUrl(shortCode) {
         showToast(`Deleted link '${shortCode}'`, 'success');
         loadAllUrls();
     } catch (err) {
-        showToast(getErrorMessage(err), 'error');
+        showToast(err.message, 'error');
     }
 }
 
@@ -365,64 +335,4 @@ function escapeHtml(str) {
             '"': '&quot;'
         }[tag] || tag)
     );
-}
-
-// Detect network/backend-down errors and return a professional message
-function getErrorMessage(err) {
-    if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        return 'Backend is currently unavailable. Please try again later.';
-    }
-    return err.message || 'An unexpected error occurred.';
-}
-
-// Dynamic Backend Status Check
-function updateBackendBadge(isOnline) {
-    if (isOnline) {
-        backendStatusBadge.className = 'tag tag-status-online';
-        backendStatusBadge.title = 'Spring Boot backend is reachable.';
-        backendStatusDot.className = 'status-dot status-dot-online';
-        backendStatusText.textContent = 'Backend Online';
-    } else {
-        backendStatusBadge.className = 'tag tag-status-warn';
-        backendStatusBadge.title = 'Backend is currently unavailable. Backend-dependent features cannot be used right now.';
-        backendStatusDot.className = 'status-dot status-dot-warn';
-        backendStatusText.textContent = 'Backend Offline';
-    }
-}
-
-async function checkBackendStatus() {
-    const healthUrl = `${API_BASE_URL}/api/urls`;
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-        const response = await fetch(healthUrl, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            updateBackendBadge(false);
-            return;
-        }
-
-        // Must be JSON response from Spring Boot REST API
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            updateBackendBadge(false);
-            return;
-        }
-
-        // Verify JSON array can be parsed
-        const data = await response.json();
-        if (Array.isArray(data)) {
-            updateBackendBadge(true);
-        } else {
-            updateBackendBadge(false);
-        }
-    } catch (err) {
-        updateBackendBadge(false);
-    }
 }
