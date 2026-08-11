@@ -1,9 +1,28 @@
 // Configuration: Backend API Base URL
-const API_BASE_URL = (window.location.origin.includes('5500') || window.location.origin.includes('8080'))
-    ? 'http://localhost:8080'
-    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? window.location.origin
-        : 'https://linkpulse-backend-thkr.onrender.com';
+// When running inside Docker (Nginx container on port 80), API requests use relative origin (Nginx proxies /api/ -> backend:8080).
+// When running served by Spring Boot directly on 8080, API requests target localhost:8080.
+// When running from any static dev server (Live Server, http-server, etc.), target http://localhost:8080 directly.
+// When running deployed on Render, target the Render backend URL.
+const SPRING_BOOT_LOCAL_URL = 'http://localhost:8080';
+
+const API_BASE_URL = (() => {
+    const origin = window.location.origin;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+
+    // Deployed on Render (not localhost/local network)
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('192.168.')) {
+        return 'https://linkpulse-backend-thkr.onrender.com';
+    }
+
+    // Docker Nginx proxy on port 80, or Spring Boot embedded static server on port 8080
+    if (port === '' || port === '80' || port === '8080') {
+        return origin;
+    }
+
+    // Served from any other local port (e.g. 5500, 8090, 8091) or file:// protocol
+    return SPRING_BOOT_LOCAL_URL;
+})();
 
 // State management
 let allUrls = [];
@@ -52,15 +71,17 @@ const overviewActiveUrls = document.getElementById('overview-active-urls');
 document.addEventListener('DOMContentLoaded', () => {
     checkBackendStatus();
     loadAllUrls();
-    // Real-Time Polling: Refresh click counts, metrics, and backend status every 3 seconds
-    setInterval(() => {
-        checkBackendStatus();
-        loadAllUrls();
-    }, 3000);
+    // Refresh URLs every 3s
+    setInterval(loadAllUrls, 3000);
+    // Periodically check backend health every 10s
+    setInterval(checkBackendStatus, 10000);
 });
 
 // Auto-refresh when switching back to the dashboard tab
-window.addEventListener('focus', loadAllUrls);
+window.addEventListener('focus', () => {
+    checkBackendStatus();
+    loadAllUrls();
+});
 
 shortenForm.addEventListener('submit', handleCreateShortUrl);
 copyBtn.addEventListener('click', () => copyToClipboard(resultShortUrl.textContent));
@@ -370,16 +391,38 @@ function updateBackendBadge(isOnline) {
 }
 
 async function checkBackendStatus() {
+    const healthUrl = `${API_BASE_URL}/api/urls`;
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2500);
-        const response = await fetch(`${API_BASE_URL}/api/urls`, {
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        const response = await fetch(healthUrl, {
             method: 'GET',
+            headers: { 'Accept': 'application/json' },
             signal: controller.signal
         });
         clearTimeout(timeoutId);
-        updateBackendBadge(response.ok);
-    } catch {
+
+        if (!response.ok) {
+            updateBackendBadge(false);
+            return;
+        }
+
+        // Must be JSON response from Spring Boot REST API
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            updateBackendBadge(false);
+            return;
+        }
+
+        // Verify JSON array can be parsed
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            updateBackendBadge(true);
+        } else {
+            updateBackendBadge(false);
+        }
+    } catch (err) {
         updateBackendBadge(false);
     }
 }
