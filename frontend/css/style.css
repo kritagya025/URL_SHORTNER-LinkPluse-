@@ -130,7 +130,31 @@ body {
     50%      { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1); }
 }
 
-/* Tooltip */
+/* Backend Online State */
+.tag-status-online {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+    cursor: default;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.status-dot-online {
+    background: #34d399;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    animation: pulse-green 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+    50%      { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+}
+
+/* Tooltip (shared for both states) */
+.tag-status-online::after,
 .tag-status-warn::after {
     content: attr(title);
     position: absolute;
@@ -155,6 +179,7 @@ body {
     z-index: 100;
 }
 
+.tag-status-online:hover::after,
 .tag-status-warn:hover::after {
     opacity: 1;
     visibility: visible;
@@ -162,6 +187,10 @@ body {
 
 .tag-status-warn:hover {
     background: rgba(245, 158, 11, 0.12);
+}
+
+.tag-status-online:hover {
+    background: rgba(16, 185, 129, 0.12);
 }
 
 /* Hero */

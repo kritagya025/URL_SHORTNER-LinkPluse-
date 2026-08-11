@@ -38,6 +38,11 @@ const tableSearch = document.getElementById('table-search');
 const tableUrlCount = document.getElementById('table-url-count');
 const toastContainer = document.getElementById('toast-container');
 
+// Backend Status Badge Elements
+const backendStatusBadge = document.getElementById('backend-status-badge');
+const backendStatusDot = document.getElementById('backend-status-dot');
+const backendStatusText = document.getElementById('backend-status-text');
+
 // Overview Counters
 const overviewTotalUrls = document.getElementById('overview-total-urls');
 const overviewTotalClicks = document.getElementById('overview-total-clicks');
@@ -45,9 +50,13 @@ const overviewActiveUrls = document.getElementById('overview-active-urls');
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    checkBackendStatus();
     loadAllUrls();
-    // Real-Time Polling: Refresh click counts and metrics every 3 seconds
-    setInterval(loadAllUrls, 3000);
+    // Real-Time Polling: Refresh click counts, metrics, and backend status every 3 seconds
+    setInterval(() => {
+        checkBackendStatus();
+        loadAllUrls();
+    }, 3000);
 });
 
 // Auto-refresh when switching back to the dashboard tab
@@ -340,7 +349,37 @@ function escapeHtml(str) {
 // Detect network/backend-down errors and return a professional message
 function getErrorMessage(err) {
     if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        return 'Backend is temporarily unavailable. Please try again later.';
+        return 'Backend is currently unavailable. Please try again later.';
     }
     return err.message || 'An unexpected error occurred.';
+}
+
+// Dynamic Backend Status Check
+function updateBackendBadge(isOnline) {
+    if (isOnline) {
+        backendStatusBadge.className = 'tag tag-status-online';
+        backendStatusBadge.title = 'Spring Boot backend is reachable.';
+        backendStatusDot.className = 'status-dot status-dot-online';
+        backendStatusText.textContent = 'Backend Online';
+    } else {
+        backendStatusBadge.className = 'tag tag-status-warn';
+        backendStatusBadge.title = 'Backend is currently unavailable. Backend-dependent features cannot be used right now.';
+        backendStatusDot.className = 'status-dot status-dot-warn';
+        backendStatusText.textContent = 'Backend Offline';
+    }
+}
+
+async function checkBackendStatus() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const response = await fetch(`${API_BASE_URL}/api/urls`, {
+            method: 'GET',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        updateBackendBadge(response.ok);
+    } catch {
+        updateBackendBadge(false);
+    }
 }
