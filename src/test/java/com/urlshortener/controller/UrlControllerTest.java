@@ -136,4 +136,85 @@ class UrlControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
     }
+
+    // ============================================================
+    // NEW TESTS — previously uncovered controller paths
+    // ============================================================
+
+    @Test
+    @DisplayName("GET /api/urls - Success returns list of URLs")
+    void getAllUrls_Success() throws Exception {
+        UrlResponse url1 = UrlResponse.builder()
+                .id(1L).originalUrl("https://example.com").shortCode("abc11")
+                .shortUrl("http://localhost:8080/abc11").clickCount(5L)
+                .createdAt(LocalDateTime.now()).build();
+
+        when(urlService.getAllUrls()).thenReturn(java.util.List.of(url1));
+
+        mockMvc.perform(get("/api/urls"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].shortCode").value("abc11"))
+                .andExpect(jsonPath("$[0].clickCount").value(5));
+    }
+
+    @Test
+    @DisplayName("POST /api/urls - Invalid URL format returns 400 via InvalidUrlException")
+    void createShortUrl_InvalidUrl_Returns400() throws Exception {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("ftp://not-http.com")
+                .build();
+
+        when(urlService.createShortUrl(any(CreateUrlRequest.class)))
+                .thenThrow(new com.urlshortener.exception.InvalidUrlException(
+                        "URL must start with http:// or https://"));
+
+        mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("URL must start with http:// or https://"));
+    }
+
+    @Test
+    @DisplayName("GET /{shortCode} - Non-existent code returns 404 Not Found")
+    void redirect_NotFound_Returns404() throws Exception {
+        when(urlService.getOriginalUrlAndLogClick("nocode"))
+                .thenThrow(new ShortUrlNotFoundException("Short URL code 'nocode' not found"));
+
+        mockMvc.perform(get("/nocode"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Short URL code 'nocode' not found"));
+    }
+
+    @Test
+    @DisplayName("GET /api/urls/{shortCode}/stats - Non-existent returns 404")
+    void getStats_NotFound_Returns404() throws Exception {
+        when(urlService.getStats("nocode"))
+                .thenThrow(new ShortUrlNotFoundException("Short URL code 'nocode' not found"));
+
+        mockMvc.perform(get("/api/urls/nocode/stats"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("POST /api/urls - General exception returns 500")
+    void createShortUrl_UnexpectedError_Returns500() throws Exception {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com")
+                .build();
+
+        when(urlService.createShortUrl(any(CreateUrlRequest.class)))
+                .thenThrow(new RuntimeException("Database connection failed"));
+
+        mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").exists());
+    }
 }
+
