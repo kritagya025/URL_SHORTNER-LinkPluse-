@@ -67,4 +67,33 @@ class UrlTest {
         assertEquals(now, url.getCreatedAt());
         assertEquals(expires, url.getExpiresAt());
     }
+
+    @Test
+    @DisplayName("Getters and Setters function properly")
+    void gettersAndSetters_WorkAsExpected() {
+        Url url = new Url();
+        url.setId(10L);
+        url.setOriginalUrl("https://test.org");
+        url.setShortCode("xyz789");
+        url.setClickCount(100L);
+
+        assertEquals(10L, url.getId());
+        assertEquals("https://test.org", url.getOriginalUrl());
+        assertEquals("xyz789", url.getShortCode());
+        assertEquals(100L, url.getClickCount());
+    }
+
+    @Test
+    @DisplayName("AllArgsConstructor constructs complete object instance")
+    void allArgsConstructor_ConstructsObjectInstance() {
+        LocalDateTime now = LocalDateTime.now();
+        Url url = new Url(2L, "https://allargs.com", "all123", 1L, now, null);
+
+        assertEquals(2L, url.getId());
+        assertEquals("https://allargs.com", url.getOriginalUrl());
+        assertEquals("all123", url.getShortCode());
+        assertEquals(1L, url.getClickCount());
+        assertEquals(now, url.getCreatedAt());
+        assertNull(url.getExpiresAt());
+    }
 }
