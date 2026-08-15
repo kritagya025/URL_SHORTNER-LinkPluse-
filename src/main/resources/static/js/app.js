@@ -43,7 +43,10 @@ const overviewTotalUrls = document.getElementById('overview-total-urls');
 const overviewTotalClicks = document.getElementById('overview-total-clicks');
 const overviewActiveUrls = document.getElementById('overview-active-urls');
 
-// Event Listeners
+/**
+ * Global Initialization: Listens for DOMContentLoaded event to fetch initial links list
+ * and establishes a 3-second recurring interval for live click count updates.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     loadAllUrls();
     // Real-Time Polling: Refresh click counts and metrics every 3 seconds
