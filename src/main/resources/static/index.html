@@ -96,7 +96,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" id="shorten-btn" class="btn btn-primary">
+                    <button type="submit" id="shorten-btn" class="btn btn-primary" aria-label="Shorten URL">
                         <span class="btn-text">Shorten URL</span>
                         <span class="spinner hidden"></span>
                     </button>
@@ -111,7 +111,7 @@
                     <div class="result-body">
                         <a id="result-short-url" href="#" target="_blank" class="result-link"
                             title="Generated Short URL"></a>
-                        <button id="copy-btn" class="btn btn-secondary btn-sm">
+                        <button id="copy-btn" class="btn btn-secondary btn-sm" aria-label="Copy URL to clipboard">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -137,9 +137,9 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text" id="stats-short-code" placeholder="Enter code (e.g. aB72x)">
+                        <input type="text" id="stats-short-code" placeholder="Enter code (e.g. aB72x)" aria-label="Short code to inspect">
                     </div>
-                    <button id="get-stats-btn" class="btn btn-secondary">Inspect</button>
+                    <button id="get-stats-btn" class="btn btn-secondary" aria-label="Inspect link analytics">Inspect</button>
                 </div>
 
                 <div id="stats-display" class="stats-content hidden">
