@@ -9,6 +9,7 @@ import com.urlshortener.exception.InvalidUrlException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
 import com.urlshortener.repository.UrlRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service implementation containing core business logic for URL shortening,
+ * redirection resolution, metrics tracking, and link validation.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UrlService {
@@ -48,6 +54,7 @@ public class UrlService {
                 .build();
 
         Url savedUrl = urlRepository.save(url);
+        log.info("Created short URL code '{}' for original URL '{}'", shortCode, originalUrl);
         return mapToUrlResponse(savedUrl);
     }
 
@@ -57,11 +64,13 @@ public class UrlService {
                 .orElseThrow(() -> new ShortUrlNotFoundException("Short URL code '" + shortCode + "' not found"));
 
         if (isExpired(url)) {
+            log.warn("Attempted access to expired short URL code '{}'", shortCode);
             throw new ExpiredUrlException("Short URL code '" + shortCode + "' has expired");
         }
 
         url.setClickCount(url.getClickCount() + 1);
         urlRepository.save(url);
+        log.debug("Incremented click count for short code '{}' to {}", shortCode, url.getClickCount());
 
         return url.getOriginalUrl();
     }
@@ -97,6 +106,7 @@ public class UrlService {
         Url url = urlRepository.findByShortCode(shortCode)
                 .orElseThrow(() -> new ShortUrlNotFoundException("Short URL code '" + shortCode + "' not found"));
         urlRepository.delete(url);
+        log.info("Deleted short URL code '{}'", shortCode);
     }
 
     private String generateUniqueShortCode() {
