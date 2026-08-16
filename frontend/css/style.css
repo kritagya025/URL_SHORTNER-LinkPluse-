@@ -149,7 +149,7 @@ body {
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--text-muted);
-    text-uppercase: uppercase;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
@@ -331,7 +331,7 @@ body {
     font-size: 0.75rem;
     font-weight: 600;
     color: #34d399;
-    text-uppercase: uppercase;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
@@ -417,7 +417,7 @@ body {
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--text-muted);
-    text-uppercase: uppercase;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
@@ -583,7 +583,7 @@ body {
     color: var(--text-muted);
     font-size: 0.72rem;
     font-weight: 600;
-    text-uppercase: uppercase;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 1px solid var(--panel-border);
     white-space: nowrap;
