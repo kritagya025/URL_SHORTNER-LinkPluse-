@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('focus', loadAllUrls);
 
 shortenForm.addEventListener('submit', handleCreateShortUrl);
-copyBtn.addEventListener('click', () => copyToClipboard(resultShortUrl.textContent));
+copyBtn.addEventListener('click', () => copyToClipboard(resultShortUrl.textContent, copyBtn));
 getStatsBtn.addEventListener('click', handleGetStats);
 refreshBtn.addEventListener('click', loadAllUrls);
 tableSearch.addEventListener('input', handleTableSearch);
@@ -272,7 +272,7 @@ function renderUrlTable(urls) {
             <td><span class="badge ${statusClass}">${statusText}</span></td>
             <td class="align-right">
                 <div class="action-group">
-                    <button class="action-btn" title="Copy Link" onclick="copyToClipboard('${url.shortUrl}')">Copy</button>
+                    <button class="action-btn" title="Copy Link" onclick="copyToClipboard('${url.shortUrl}', this)">Copy</button>
                     <button class="action-btn" title="Inspect Stats" onclick="inspectStatsFromTable('${url.shortCode}')">Stats</button>
                     <button class="action-btn action-btn-del" title="Delete URL" onclick="deleteUrl('${url.shortCode}')">Delete</button>
                 </div>
@@ -330,10 +330,19 @@ function inspectStatsFromTable(shortCode) {
 }
 
 // Helper: Copy to Clipboard
-function copyToClipboard(text) {
+function copyToClipboard(text, btnElement = null) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
         showToast('Short URL copied to clipboard', 'success');
+        if (btnElement) {
+            const originalText = btnElement.textContent;
+            btnElement.textContent = 'Copied!';
+            btnElement.classList.add('copied-flash');
+            setTimeout(() => {
+                btnElement.textContent = originalText;
+                btnElement.classList.remove('copied-flash');
+            }, 1500);
+        }
     }).catch(() => {
         showToast('Failed to copy to clipboard', 'error');
     });
