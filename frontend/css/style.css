@@ -449,6 +449,25 @@ body {
     pointer-events: none;
 }
 
+.input-clear-btn {
+    position: absolute;
+    right: 0.6rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 0.3rem;
+    border-radius: 50%;
+    line-height: 1;
+    transition: var(--transition);
+}
+
+.input-clear-btn:hover {
+    color: var(--text-primary);
+    background: #27272a;
+}
+
 .placeholder-box {
     text-align: center;
     padding: 2rem 1rem;

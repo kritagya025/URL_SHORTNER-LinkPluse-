@@ -62,6 +62,38 @@ getStatsBtn.addEventListener('click', handleGetStats);
 refreshBtn.addEventListener('click', loadAllUrls);
 tableSearch.addEventListener('input', handleTableSearch);
 
+const clearTableSearchBtn = document.getElementById('clear-table-search');
+const clearStatsInputBtn = document.getElementById('clear-stats-input');
+
+if (tableSearch && clearTableSearchBtn) {
+    tableSearch.addEventListener('input', () => {
+        if (tableSearch.value) {
+            clearTableSearchBtn.classList.remove('hidden');
+        } else {
+            clearTableSearchBtn.classList.add('hidden');
+        }
+    });
+    clearTableSearchBtn.addEventListener('click', () => {
+        tableSearch.value = '';
+        clearTableSearchBtn.classList.add('hidden');
+        handleTableSearch();
+    });
+}
+
+if (statsShortCodeInput && clearStatsInputBtn) {
+    statsShortCodeInput.addEventListener('input', () => {
+        if (statsShortCodeInput.value) {
+            clearStatsInputBtn.classList.remove('hidden');
+        } else {
+            clearStatsInputBtn.classList.add('hidden');
+        }
+    });
+    clearStatsInputBtn.addEventListener('click', () => {
+        statsShortCodeInput.value = '';
+        clearStatsInputBtn.classList.add('hidden');
+    });
+}
+
 // Expiration preset buttons handler
 document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
