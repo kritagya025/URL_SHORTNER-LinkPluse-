@@ -99,6 +99,39 @@ body {
     color: var(--text-muted);
 }
 
+.tag-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+
+.status-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #34d399;
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+    animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+    }
+}
+
 /* Hero */
 .hero {
     display: flex;
