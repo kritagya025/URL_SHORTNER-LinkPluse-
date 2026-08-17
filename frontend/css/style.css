@@ -282,6 +282,36 @@ body {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.preset-btns {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+}
+
+.preset-btn {
+    background: #18181b;
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.preset-btn:hover {
+    background: #27272a;
+    color: var(--text-primary);
+    border-color: #3f3f46;
+}
+
+.preset-btn-clear:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
 /* Buttons */
 .btn {
     display: inline-flex;

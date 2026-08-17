@@ -62,6 +62,31 @@ getStatsBtn.addEventListener('click', handleGetStats);
 refreshBtn.addEventListener('click', loadAllUrls);
 tableSearch.addEventListener('input', handleTableSearch);
 
+// Expiration preset buttons handler
+document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const preset = e.target.getAttribute('data-preset');
+        if (preset === 'clear') {
+            expiresAtInput.value = '';
+            return;
+        }
+
+        const now = new Date();
+        if (preset === '1h') now.setHours(now.getHours() + 1);
+        else if (preset === '1d') now.setDate(now.getDate() + 1);
+        else if (preset === '7d') now.setDate(now.getDate() + 7);
+
+        // Format to ISO string format suitable for datetime-local input (YYYY-MM-DDTHH:mm)
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+
+        expiresAtInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    });
+});
+
 // Create Short URL Handler
 async function handleCreateShortUrl(e) {
     e.preventDefault();
