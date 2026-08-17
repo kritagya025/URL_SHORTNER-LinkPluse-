@@ -62,6 +62,13 @@ getStatsBtn.addEventListener('click', handleGetStats);
 refreshBtn.addEventListener('click', loadAllUrls);
 tableSearch.addEventListener('input', handleTableSearch);
 
+const scrollTopBtn = document.getElementById('scroll-top-btn');
+if (scrollTopBtn) {
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
 const clearTableSearchBtn = document.getElementById('clear-table-search');
 const clearStatsInputBtn = document.getElementById('clear-stats-input');
 
