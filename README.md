@@ -14,7 +14,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 
 ## Overview
 
-- **Base62 URL Shortening**: Encodes long URLs into compact 6-character short codes (e.g. `http://localhost/aB72x`).
+- **Random Base62 Short-Code Generation**: Generates a random 6-character short code using characters from the Base62 character set (a-z, A-Z, 0-9), with collision checking to ensure uniqueness (e.g. `http://localhost/aB72x`).
 - **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time.
 - **Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards without page refreshes.
 - **Expiration Management**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`.

@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to the LinkPulse project will be documented in this file.
 
@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [1.0.0] - 2025-08-22
 
 ### Added
-- Base62 URL shortening engine with 6-character short codes
+- Random Base62 short-code generation with collision checking for 6-character short codes
 - HTTP 302 redirect engine with real-time click tracking
 - Real-time click analytics with auto-polling dashboard
 - Custom expiration date/time support with HTTP 410 Gone for expired links
