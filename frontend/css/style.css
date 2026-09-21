@@ -1005,6 +1005,7 @@ input {
 
 .th-sortable {
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
     transition: color var(--speed) var(--ease);
 }
