@@ -4,6 +4,39 @@ All notable changes to the LinkPulse project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-09-21
+
+### Fixed
+- Every unmatched request path returned HTTP 500 instead of 404. Spring resolves an unknown path
+  through the static resource handler, which raises `NoResourceFoundException`; the global handler
+  had only a catch-all for `Exception`, so it absorbed that and reported a server error for any
+  mistyped URL, missing asset or over-length short code. Explicit 404 handling added, with
+  regression tests.
+- Concurrent visits to the same short code lost clicks. The counter was read, incremented in memory
+  and saved back, so simultaneous redirects read the same value and wrote the same result. Measured
+  at 50 parallel requests: 42-48 clicks recorded before, exactly 50 after. Replaced with an atomic
+  `UPDATE` in the repository.
+- Error responses no longer echo internal exception text (SQL, driver and path detail). The cause is
+  logged with its stack trace and callers receive a generic message.
+- `validateUrlFormat` caught its own `InvalidUrlException` and re-wrapped it, producing doubled
+  messages such as "Invalid URL format: URL must start with http:// or https://". Only genuine
+  `URISyntaxException` parse failures are wrapped now.
+- CORS allowed credentials alongside a wildcard origin pattern, letting any site issue credentialed
+  requests. The API is stateless and reads no cookies, so credentials are now disallowed.
+- CI could not start its PostgreSQL service container when the `DB_PASSWORD` repository secret was
+  unset, because the postgres image refuses an empty password. The throwaway container now uses a
+  literal test credential.
+- Re-synced `src/main/resources/static/css/style.css` with `frontend/`, which had drifted by one
+  vendor-prefix declaration.
+
+### Changed
+- Removed the obsolete `version` key from `docker-compose.yml`, which Compose v2 ignores with a warning.
+
+### Documentation
+- `docs/API.md` documented an `{"error": ...}` error field the API never returned; corrected to the
+  actual `{status, message, timestamp}` shape.
+- Corrected the README test count (39 to 45) and line-coverage figure (131/144 to 124/137).
+
 ## [1.3.0] - 2026-09-21
 
 ### Added

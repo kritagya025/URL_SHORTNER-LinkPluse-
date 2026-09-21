@@ -1,11 +1,14 @@
 package com.urlshortener.exception;
 
 import com.urlshortener.dto.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
@@ -13,37 +16,23 @@ import java.time.LocalDateTime;
  * Global Exception Handler to capture all application exceptions
  * and map them to consistent JSON ErrorResponse payloads.
  */
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ShortUrlNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ShortUrlNotFoundException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .message(ex.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(ExpiredUrlException.class)
     public ResponseEntity<ErrorResponse> handleExpired(ExpiredUrlException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.GONE.value())
-                .message(ex.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return new ResponseEntity<>(error, HttpStatus.GONE);
+        return build(HttpStatus.GONE, ex.getMessage());
     }
 
     @ExceptionHandler(InvalidUrlException.class)
     public ResponseEntity<ErrorResponse> handleInvalidUrl(InvalidUrlException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(ex.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -53,21 +42,46 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("Validation failed");
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(errorMessage)
-                .timestamp(LocalDateTime.now())
-                .build();
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return build(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
+    /**
+     * Handles requests for paths that match no controller and no static resource.
+     *
+     * <p>Spring resolves an unmatched path by asking the static resource handler for it, which
+     * raises {@link NoResourceFoundException}. Without this handler the catch-all below would
+     * absorb it and answer every mistyped URL with a 500 instead of a 404.
+     *
+     * @param ex The resource-resolution failure raised by Spring MVC
+     * @return 404 Not Found with the standard error payload
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNoHandler(Exception ex) {
+        log.debug("No handler or static resource for request: {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, "The requested resource was not found");
+    }
+
+    /**
+     * Last-resort handler for unanticipated failures.
+     *
+     * <p>The cause is logged with its stack trace but deliberately kept out of the response body,
+     * so internal details (SQL text, file paths, driver messages) are never returned to callers.
+     *
+     * @param ex The unhandled exception
+     * @return 500 Internal Server Error with a generic message
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
+        log.error("Unhandled exception while processing request", ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+    }
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {
         ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("An unexpected error occurred: " + ex.getMessage())
+                .status(status.value())
+                .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(error, status);
     }
 }

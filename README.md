@@ -21,7 +21,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 - **Dual-Theme Analytics Dashboard**: Light and dark themes with a persisted toggle, sortable columns, per-row click bars, relative timestamps, real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), and link deletion. Fully responsive, collapsing into stacked cards on mobile.
 - **Input Validation & Error Handling**: Spring Bean Validation enforces URL formats, while `@RestControllerAdvice` standardizes JSON error responses.
 - **Ultra-Lean Multi-Stage Docker Architecture**: Uses `jlink` to build a custom 20-module minimal JRE on Alpine 3.21, shrinking image size from 434MB to **197MB** (55% reduction).
-- **Comprehensive Unit & Integration Test Suite**: 39 JUnit 5 tests achieving **91% line coverage** and **90% branch coverage** via JaCoCo.
+- **Comprehensive Unit & Integration Test Suite**: 45 JUnit 5 tests achieving **91% line coverage** and **90% branch coverage** via JaCoCo.
 - **Automated CI/CD Pipeline**: GitHub Actions workflow automatically compiles code, runs JUnit 5 tests with JaCoCo reports, validates frontend assets, and builds Docker images.
 
 ---
@@ -32,9 +32,9 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 | :--- | :--- | :--- |
 | **Throughput (50 Concurrency)** | **500 req/sec** | Sustained throughput across GET redirection endpoint |
 | **Mean Response Time** | **80.1 ms** | Average end-to-end redirection latency under load |
-| **Line Coverage (JaCoCo)** | **91%** | 131/144 lines covered across service, controller, and entity layers |
+| **Line Coverage (JaCoCo)** | **91%** | 124/137 lines covered across service, controller, and entity layers |
 | **Branch Coverage (JaCoCo)** | **90%** | 27/30 conditional branches covered |
-| **Total Test Suite Count** | **39 tests** | Unit tests + MockMvc API controller integration tests |
+| **Total Test Suite Count** | **45 tests** | Unit tests + MockMvc API controller integration tests |
 | **Docker Image Footprint** | **197 MB** | 3-stage `jlink` custom JRE + Alpine base (reduced from 434 MB) |
 
 ---
@@ -48,7 +48,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 | **Backend Framework**| Java 17 / Spring Boot 3.2.5 | REST Controllers, Service Layer, Exception Handling, Data JPA |
 | **Database** | PostgreSQL 16 | Relational persistence with indexed short-code lookups |
 | **Connection Pool** | HikariCP | High-performance database connection management |
-| **Testing & Coverage** | JUnit 5, MockMvc & JaCoCo | 39 unit/integration tests with automated HTML coverage reports |
+| **Testing & Coverage** | JUnit 5, MockMvc & JaCoCo | 45 unit/integration tests with automated HTML coverage reports |
 | **Containerization** | Docker & Docker Compose | 3-Stage `jlink` minimal JRE container builds & network orchestration |
 | **CI/CD Pipeline** | GitHub Actions | Automated build, test, Docker image building, and Docker Hub registry publishing |
 

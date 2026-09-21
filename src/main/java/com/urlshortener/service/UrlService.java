@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,9 +69,9 @@ public class UrlService {
             throw new ExpiredUrlException("Short URL code '" + shortCode + "' has expired");
         }
 
-        url.setClickCount(url.getClickCount() + 1);
-        urlRepository.save(url);
-        log.debug("Incremented click count for short code '{}' to {}", shortCode, url.getClickCount());
+        // Incremented in a single UPDATE so concurrent visits cannot overwrite each other
+        urlRepository.incrementClickCount(url.getId());
+        log.debug("Incremented click count for short code '{}'", shortCode);
 
         return url.getOriginalUrl();
     }
@@ -121,16 +122,19 @@ public class UrlService {
     }
 
     private void validateUrlFormat(String urlString) {
+        URI uri;
         try {
-            URI uri = new URI(urlString);
-            if (uri.getScheme() == null || (!uri.getScheme().equalsIgnoreCase("http") && !uri.getScheme().equalsIgnoreCase("https"))) {
-                throw new InvalidUrlException("URL must start with http:// or https://");
-            }
-            if (uri.getHost() == null) {
-                throw new InvalidUrlException("Invalid URL host structure");
-            }
-        } catch (Exception e) {
+            uri = new URI(urlString);
+        } catch (URISyntaxException e) {
+            // Only a genuine parse failure is wrapped; the checks below raise their own messages
             throw new InvalidUrlException("Invalid URL format: " + e.getMessage());
+        }
+
+        if (uri.getScheme() == null || (!uri.getScheme().equalsIgnoreCase("http") && !uri.getScheme().equalsIgnoreCase("https"))) {
+            throw new InvalidUrlException("URL must start with http:// or https://");
+        }
+        if (uri.getHost() == null) {
+            throw new InvalidUrlException("Invalid URL host structure");
         }
     }
 

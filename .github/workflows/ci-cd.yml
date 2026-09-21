@@ -21,7 +21,10 @@ jobs:
         env:
           POSTGRES_DB: url_shortener_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          # Throwaway credential for this ephemeral CI container only. The postgres
+          # image refuses to start with an empty password, so this must not depend on
+          # a repository secret that may be unset.
+          POSTGRES_PASSWORD: ci_test_password
         ports:
           - 5432:5432
         options: >-
@@ -48,7 +51,7 @@ jobs:
           DB_PORT: 5432
           DB_NAME: url_shortener_db
           DB_USERNAME: postgres
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD: ci_test_password
 
   # ============================================================================
   # JOB 2: Continuous Integration — Frontend Assets & Nginx Config Validation

@@ -108,14 +108,15 @@ All error responses follow a consistent JSON structure:
 
 ```json
 {
-  "error": "Short URL not found",
-  "status": 404
+  "status": 404,
+  "message": "Short URL code 'aB72x' not found",
+  "timestamp": "2026-09-21T17:20:58.0501234"
 }
 ```
 
-| Status Code | Description                                  |
-| :---------- | :------------------------------------------- |
-| 400         | Invalid URL format or validation failure     |
-| 404         | Short code not found                         |
-| 410         | Short URL has expired                        |
-| 500         | Internal server error                        |
+| Status Code | Description                                           |
+| :---------- | :---------------------------------------------------- |
+| 400         | Invalid URL format or validation failure              |
+| 404         | Short code not found, or no such route/resource       |
+| 410         | Short URL has expired                                 |
+| 500         | Unexpected server error (details are logged, not returned) |

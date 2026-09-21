@@ -22,7 +22,10 @@ public class WebConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         
-        config.setAllowCredentials(true);
+        // The API is stateless and reads no cookies or Authorization header, so credentials are
+        // not permitted. Allowing them alongside a wildcard origin would let any site on the web
+        // issue credentialed requests against this service.
+        config.setAllowCredentials(false);
         config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));

@@ -103,13 +103,14 @@ class UrlServiceTest {
                 .build();
 
         when(urlRepository.findByShortCode("abc123")).thenReturn(Optional.of(url));
-        when(urlRepository.save(any(Url.class))).thenAnswer(i -> i.getArgument(0));
 
         String redirectUrl = urlService.getOriginalUrlAndLogClick("abc123");
 
         assertEquals("https://example.com", redirectUrl);
-        assertEquals(6L, url.getClickCount());
-        verify(urlRepository, times(1)).save(url);
+        // The counter is bumped by an atomic UPDATE rather than a read-modify-write save,
+        // so concurrent visits to the same code cannot lose clicks.
+        verify(urlRepository, times(1)).incrementClickCount(1L);
+        verify(urlRepository, never()).save(any(Url.class));
     }
 
     @Test
