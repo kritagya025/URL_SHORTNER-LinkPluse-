@@ -18,7 +18,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 - **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time.
 - **Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards without page refreshes.
 - **Expiration Management**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`.
-- **Developer Dark Dashboard**: Clean developer aesthetic featuring real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), and link deletion.
+- **Dual-Theme Analytics Dashboard**: Light and dark themes with a persisted toggle, sortable columns, per-row click bars, relative timestamps, real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), and link deletion. Fully responsive, collapsing into stacked cards on mobile.
 - **Input Validation & Error Handling**: Spring Bean Validation enforces URL formats, while `@RestControllerAdvice` standardizes JSON error responses.
 - **Ultra-Lean Multi-Stage Docker Architecture**: Uses `jlink` to build a custom 20-module minimal JRE on Alpine 3.21, shrinking image size from 434MB to **197MB** (55% reduction).
 - **Comprehensive Unit & Integration Test Suite**: 39 JUnit 5 tests achieving **91% line coverage** and **90% branch coverage** via JaCoCo.
@@ -43,7 +43,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
-| **Frontend UI** | HTML5, Vanilla CSS3, JavaScript (ES6+) | Dark theme dashboard with real-time auto-polling & search filtering |
+| **Frontend UI** | HTML5, Vanilla CSS3, JavaScript (ES6+) | Token-based dual-theme dashboard with real-time auto-polling, sorting & search filtering |
 | **Web Server** | Nginx 1.25 Alpine | Serves static frontend assets and reverse-proxies `/api/` traffic |
 | **Backend Framework**| Java 17 / Spring Boot 3.2.5 | REST Controllers, Service Layer, Exception Handling, Data JPA |
 | **Database** | PostgreSQL 16 | Relational persistence with indexed short-code lookups |

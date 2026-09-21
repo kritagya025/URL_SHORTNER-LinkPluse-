@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -7,86 +7,171 @@
     <title>LinkPulse — URL Shortener & Real-Time Analytics</title>
     <meta name="description"
         content="A fast, secure URL shortener and analytics service built with Spring Boot and PostgreSQL.">
-    <!-- Google Fonts: Inter -->
+    <meta name="theme-color" content="#08080b">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M22 12h-4l-3 9L9 3l-3 9H2'/></svg>">
+
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (codes & links) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Apply the stored theme before first paint to avoid a flash of the wrong theme -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('linkpulse-theme');
+                var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+                document.documentElement.setAttribute('data-theme', stored || (prefersLight ? 'light' : 'dark'));
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
 </head>
 
 <body>
+    <!-- Ambient background gradient -->
+    <div class="bg-orbs" aria-hidden="true"><span></span><span></span></div>
+
     <div class="app-layout">
-        <!-- Header / Navigation -->
-        <header class="header">
+        <!-- Header -->
+        <header class="header" id="site-header">
             <div class="brand">
-                <svg class="brand-logo" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                </svg>
-                <span class="brand-title">LinkPulse</span>
+                <span class="brand-mark" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                </span>
+                <span class="brand-text">
+                    <span class="brand-title">LinkPulse</span>
+                    <span class="brand-sub">URL Shortener &amp; Analytics</span>
+                </span>
             </div>
-            <div class="tech-tags">
-                <span class="tag">Java 17</span>
-                <span class="tag">Spring Boot 3</span>
-                <span class="tag">PostgreSQL</span>
+
+            <div class="header-actions">
+                <div class="tech-tags">
+                    <span class="tag tag-status" id="api-status" data-state="online">
+                        <span class="status-dot"></span>
+                        <span id="api-status-text">Connecting…</span>
+                    </span>
+                    <span class="tag">Java 17</span>
+                    <span class="tag">Spring Boot 3</span>
+                    <span class="tag">PostgreSQL</span>
+                </div>
+                <button type="button" id="theme-toggle" class="icon-btn" aria-label="Toggle colour theme"
+                    title="Toggle light / dark theme">
+                    <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                    </svg>
+                </button>
             </div>
         </header>
 
-        <!-- Hero & Overview Metrics -->
+        <!-- Hero & overview metrics -->
         <section class="hero">
-            <h1 class="hero-heading">URL Shortener & Link Analytics</h1>
-            <p class="hero-subheading">Generate compact short links, track real-time click counts, and manage link
-                expirations in a unified dashboard.</p>
+            <span class="hero-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                Live click tracking
+            </span>
+            <h1 class="hero-heading">Short links with <em>real-time</em> analytics</h1>
+            <p class="hero-subheading">Generate compact short links, watch click counts update live, and manage link
+                expirations from a single dashboard.</p>
 
-            <div class="metrics-bar">
-                <div class="metric-item">
-                    <span class="metric-num" id="overview-total-urls">0</span>
-                    <span class="metric-lbl">Total Links</span>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                    </span>
+                    <span class="metric-body">
+                        <span class="metric-num" id="overview-total-urls">0</span>
+                        <span class="metric-lbl">Total Links</span>
+                    </span>
                 </div>
-                <div class="metric-sep"></div>
-                <div class="metric-item">
-                    <span class="metric-num" id="overview-total-clicks">0</span>
-                    <span class="metric-lbl">Total Clicks</span>
+
+                <div class="metric-card">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"></path>
+                            <path d="m7 14 4-4 3 3 5-6"></path>
+                        </svg>
+                    </span>
+                    <span class="metric-body">
+                        <span class="metric-num" id="overview-total-clicks">0</span>
+                        <span class="metric-lbl">Total Clicks</span>
+                    </span>
                 </div>
-                <div class="metric-sep"></div>
-                <div class="metric-item">
-                    <span class="metric-num" id="overview-active-urls">0</span>
-                    <span class="metric-lbl">Active Links</span>
+
+                <div class="metric-card" data-accent="success">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="m8.5 12.5 2.5 2.5 4.5-5"></path>
+                        </svg>
+                    </span>
+                    <span class="metric-body">
+                        <span class="metric-num" id="overview-active-urls">0</span>
+                        <span class="metric-lbl">Active Links</span>
+                    </span>
                 </div>
             </div>
         </section>
 
-        <!-- Toast Notifications -->
-        <div id="toast-container" class="toast-container"></div>
-
-        <!-- Main Workspace Grid -->
+        <!-- Main workspace -->
         <div class="workspace-grid">
-            <!-- Left: URL Shortener Form -->
-            <div class="panel shortener-panel">
+            <!-- Shortener -->
+            <section class="panel shortener-panel">
                 <div class="panel-header">
-                    <h2>Shorten URL</h2>
-                    <p>Enter a destination URL to generate a short link</p>
+                    <span class="panel-icon" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </span>
+                    <div>
+                        <h2>Shorten URL</h2>
+                        <p>Enter a destination URL to generate a short link</p>
+                    </div>
                 </div>
 
                 <form id="shorten-form" class="shorten-form">
                     <div class="form-field">
                         <label for="original-url">Destination URL <span class="required-star">*</span></label>
-                        <div class="input-with-icon">
+                        <div class="input-wrap">
                             <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                             </svg>
                             <input type="url" id="original-url" placeholder="https://example.com/long/path" required
-                                autocomplete="off">
+                                autocomplete="off" spellcheck="false">
                         </div>
                     </div>
 
                     <div class="form-field">
                         <label for="expires-at">Expiration Date <span class="optional-note">(optional)</span></label>
-                        <div class="input-with-icon">
+                        <div class="input-wrap">
                             <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                 <line x1="16" y1="2" x2="16" y2="6"></line>
                                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -94,52 +179,77 @@
                             </svg>
                             <input type="datetime-local" id="expires-at">
                         </div>
+                        <div class="preset-btns">
+                            <button type="button" class="preset-btn" data-preset="1h">+1 Hour</button>
+                            <button type="button" class="preset-btn" data-preset="1d">+1 Day</button>
+                            <button type="button" class="preset-btn" data-preset="7d">+7 Days</button>
+                            <button type="button" class="preset-btn" data-preset="30d">+30 Days</button>
+                            <button type="button" class="preset-btn preset-btn-clear" data-preset="clear">Clear</button>
+                        </div>
                     </div>
 
-                    <button type="submit" id="shorten-btn" class="btn btn-primary" aria-label="Shorten URL">
+                    <button type="submit" id="shorten-btn" class="btn btn-primary">
                         <span class="btn-text">Shorten URL</span>
-                        <span class="spinner hidden"></span>
+                        <span class="spinner hidden" aria-hidden="true"></span>
                     </button>
                 </form>
 
-                <!-- Generated Result Box -->
+                <!-- Generated result -->
                 <div id="result-box" class="result-panel hidden">
                     <div class="result-header">
-                        <span class="result-status-dot"></span>
-                        <span class="result-title">Generated Link</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m20 6-11 11-5-5"></path>
+                        </svg>
+                        Generated Link
                     </div>
                     <div class="result-body">
-                        <a id="result-short-url" href="#" target="_blank" class="result-link"
-                            title="Generated Short URL"></a>
-                        <button id="copy-btn" class="btn btn-secondary btn-sm" aria-label="Copy URL to clipboard">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                            Copy
-                        </button>
+                        <a id="result-short-url" href="#" target="_blank" rel="noopener" class="result-link"
+                            title="Open the generated short URL"></a>
+                        <div class="result-actions">
+                            <button id="copy-btn" class="btn btn-secondary btn-sm" aria-label="Copy short URL to clipboard">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
+                            <button id="inspect-result-btn" class="btn btn-secondary btn-sm">Inspect</button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Right: Link Inspector -->
-            <div class="panel inspector-panel">
+            <!-- Inspector -->
+            <section class="panel inspector-panel">
                 <div class="panel-header">
-                    <h2>Link Inspector</h2>
-                    <p>Lookup analytics for a specific short code</p>
+                    <span class="panel-icon" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <div>
+                        <h2>Link Inspector</h2>
+                        <p>Look up live analytics for a specific short code</p>
+                    </div>
                 </div>
 
                 <div class="search-bar">
-                    <div class="search-input-wrapper">
-                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                    <div class="input-wrap has-clear">
+                        <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text" id="stats-short-code" placeholder="Enter code (e.g. aB72x)" aria-label="Short code to inspect">
+                        <input type="text" id="stats-short-code" placeholder="Enter code (e.g. aB72x)"
+                            aria-label="Short code to inspect" autocomplete="off" spellcheck="false">
+                        <button type="button" id="clear-stats-input" class="input-clear-btn hidden"
+                            aria-label="Clear short code input">&times;</button>
                     </div>
-                    <button id="get-stats-btn" class="btn btn-secondary" aria-label="Inspect link analytics">Inspect</button>
+                    <button id="get-stats-btn" class="btn btn-secondary">Inspect</button>
                 </div>
 
                 <div id="stats-display" class="stats-content hidden">
@@ -161,23 +271,29 @@
                             <span id="stat-clicks" class="cell-value click-val">0</span>
                         </div>
                         <div class="info-cell">
-                            <span class="cell-label">Created Date</span>
+                            <span class="cell-label">Created</span>
                             <span id="stat-created" class="cell-value"></span>
                         </div>
                         <div class="info-cell cell-full">
-                            <span class="cell-label">Expiry Date</span>
+                            <span class="cell-label">Expires</span>
                             <span id="stat-expires" class="cell-value"></span>
                         </div>
                     </div>
                 </div>
 
                 <div id="stats-placeholder" class="placeholder-box">
-                    <p>Enter a short code above or click "Stats" on any URL from the dashboard table.</p>
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 3v18h18"></path>
+                        <rect x="7" y="12" width="3" height="6" rx="1"></rect>
+                        <rect x="13" y="8" width="3" height="10" rx="1"></rect>
+                    </svg>
+                    <p>Enter a short code above, or use the stats action on any row in the dashboard below.</p>
                 </div>
-            </div>
+            </section>
         </div>
 
-        <!-- Table Dashboard Section -->
+        <!-- Dashboard -->
         <section class="panel table-panel">
             <div class="table-toolbar">
                 <div class="toolbar-title">
@@ -185,17 +301,21 @@
                     <span class="count-badge" id="table-url-count">0 Links</span>
                 </div>
                 <div class="toolbar-right">
-                    <div class="filter-wrapper">
-                        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                    <div class="input-wrap has-clear">
+                        <svg class="field-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text" id="table-search" placeholder="Filter links...">
+                        <input type="text" id="table-search" placeholder="Filter links..." aria-label="Filter links"
+                            autocomplete="off">
+                        <kbd class="kbd">/</kbd>
+                        <button type="button" id="clear-table-search" class="input-clear-btn hidden"
+                            aria-label="Clear filter">&times;</button>
                     </div>
                     <button id="refresh-btn" class="btn btn-secondary btn-sm">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <polyline points="23 4 23 10 17 10"></polyline>
                             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                         </svg>
@@ -208,30 +328,119 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Original Link</th>
-                            <th>Short Link</th>
-                            <th class="align-center">Clicks</th>
-                            <th>Created Date</th>
-                            <th>Expiry Date</th>
-                            <th>Status</th>
-                            <th class="align-right">Actions</th>
+                            <th class="th-sortable" data-sort="originalUrl" aria-sort="none" tabindex="0" role="columnheader">
+                                <span class="th-inner">Original Link
+                                    <svg class="sort-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m6 15 6-6 6 6"></path>
+                                    </svg>
+                                </span>
+                            </th>
+                            <th class="th-sortable" data-sort="shortCode" aria-sort="none" tabindex="0" role="columnheader">
+                                <span class="th-inner">Short Link
+                                    <svg class="sort-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m6 15 6-6 6 6"></path>
+                                    </svg>
+                                </span>
+                            </th>
+                            <th class="th-sortable col-clicks align-center" data-sort="clickCount" aria-sort="none"
+                                tabindex="0" role="columnheader">
+                                <span class="th-inner">Clicks
+                                    <svg class="sort-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m6 15 6-6 6 6"></path>
+                                    </svg>
+                                </span>
+                            </th>
+                            <th class="th-sortable col-date" data-sort="createdAt" aria-sort="none" tabindex="0" role="columnheader">
+                                <span class="th-inner">Created
+                                    <svg class="sort-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m6 15 6-6 6 6"></path>
+                                    </svg>
+                                </span>
+                            </th>
+                            <th class="th-sortable col-date" data-sort="expiresAt" aria-sort="none" tabindex="0" role="columnheader">
+                                <span class="th-inner">Expires
+                                    <svg class="sort-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m6 15 6-6 6 6"></path>
+                                    </svg>
+                                </span>
+                            </th>
+                            <th class="col-status">Status</th>
+                            <th class="col-actions align-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="url-table-body">
-                        <!-- Rows -->
-                    </tbody>
+                    <tbody id="url-table-body"></tbody>
                 </table>
 
+                <!-- Skeleton shown during the first load -->
+                <div id="table-skeleton" class="skeleton-rows">
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line"></div>
+                </div>
+
                 <div id="table-empty" class="empty-state hidden">
-                    <p>No URLs created yet. Enter a destination URL above to shorten your first link.</p>
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    <h3 id="empty-title">No links yet</h3>
+                    <p id="empty-text">Enter a destination URL above to shorten your first link.</p>
                 </div>
             </div>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
-            <p>URL Shortener & Analytics Service — Spring Boot 3 & PostgreSQL</p>
+            <div class="footer-content">
+                <p>LinkPulse — Fast URL Shortener &amp; Analytics Platform (Spring Boot 3 &amp; PostgreSQL)</p>
+                <div class="footer-meta">
+                    <span class="version-tag">v1.3.0</span>
+                </div>
+            </div>
         </footer>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
+
+    <!-- Scroll to top -->
+    <button type="button" id="scroll-top-btn" class="scroll-top-btn" aria-label="Scroll back to top">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 15 6-6 6 6"></path>
+        </svg>
+    </button>
+
+    <!-- Delete confirmation dialog -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title"
+            aria-describedby="confirm-text">
+            <span class="modal-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                </svg>
+            </span>
+            <h3 id="confirm-title">Delete short link?</h3>
+            <p id="confirm-text"></p>
+            <div class="modal-actions">
+                <button type="button" id="confirm-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+                <button type="button" id="confirm-accept" class="btn btn-danger btn-sm">Delete</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/app.js"></script>
