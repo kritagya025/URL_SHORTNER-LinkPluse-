@@ -1,4 +1,4 @@
-﻿# LinkPulse API Reference
+# LinkPulse API Reference
 
 Base URL: `http://localhost:80` (Docker) or `http://localhost:8080` (Local)
 
@@ -99,6 +99,31 @@ DELETE /api/urls/{shortCode}
 ### Response
 - **204 No Content** â€” Successfully deleted.
 - **404 Not Found** â€” Short code not found.
+
+---
+
+## Service Health Check
+
+```http
+GET /api/health
+```
+
+Operational health and readiness probe endpoint. Intended for Docker healthchecks, Kubernetes liveness probes, and external uptime monitors.
+
+### Example Response (200 OK)
+
+```json
+{
+  "service": "LinkPulse URL Shortener",
+  "timestamp": "2026-10-14T20:30:00.123456",
+  "status": "UP",
+  "database": "CONNECTED"
+}
+```
+
+### Response Codes
+- **200 OK** — Service is operational and database is reachable.
+- **503 Service Unavailable** — Service is degraded or database connection failed.
 
 ---
 
