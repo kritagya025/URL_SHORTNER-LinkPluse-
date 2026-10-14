@@ -4,6 +4,15 @@ All notable changes to the LinkPulse project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-10-14
+
+### Added
+- Dedicated operational health check endpoint (`GET /api/health`) reporting system status, timestamp, and database connectivity.
+- Comprehensive technical architecture documentation in `docs/ARCHITECTURE.md` covering system topology, sequence flows, database design, and horizontal scaling strategies.
+- GitHub feature request issue template (`.github/ISSUE_TEMPLATE/feature_request.md`) and template chooser configuration (`.github/ISSUE_TEMPLATE/config.yml`).
+- Dedicated unit and MockMvc test suites for `RedirectController`, `WebConfig` CORS filtering, and `GlobalExceptionHandler`, expanding test coverage to 60 tests.
+- Service health check request item added to `URL_Shortener.postman_collection.json`.
+
 ## [1.3.1] - 2026-09-21
 
 ### Fixed
