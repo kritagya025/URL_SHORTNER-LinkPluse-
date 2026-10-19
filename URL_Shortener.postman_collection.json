@@ -212,6 +212,57 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Create Short URL with Custom Alias",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"originalUrl\": \"https://www.example.com/custom/alias/page\",\n  \"customAlias\": \"mybrand\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/urls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Analytics Summary",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls/analytics/summary",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls",
+						"analytics",
+						"summary"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

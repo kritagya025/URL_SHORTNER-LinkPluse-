@@ -4,6 +4,16 @@ All notable changes to the LinkPulse project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-19
+
+### Added
+- **Custom Short Code Alias Support**: Users can specify an optional branded custom short code (3–10 alphanumeric characters) upon URL creation via `POST /api/urls`.
+- **Collision & Keyword Reservation Protection**: Added `CustomAliasAlreadyExistsException` mapped to HTTP 409 Conflict. Proactively guards reserved routing words (`api`, `health`, `static`, `css`, `js`, `docs`, etc.) to prevent route hijacking.
+- **System Analytics Summary API**: Introduced `GET /api/urls/analytics/summary` endpoint returning cumulative links, click totals, active vs expired counts, average clicks per link, and the top-performing `mostVisitedUrl`.
+- **Interactive Custom Alias Input**: Modern, responsive alias input added to the shorten bar across `frontend/` and embedded static templates with real-time client format validation and clear conflict reporting.
+- **Expanded Test Coverage**: Added 11 new unit and integration tests across `UrlServiceTest`, `UrlControllerTest`, and `GlobalExceptionHandlerTest`, expanding the test suite to 71 passing tests.
+- **Postman Collection Updates**: Added collection request templates for custom alias creation and system analytics summary.
+
 ## [1.3.2] - 2026-10-14
 
 ### Added

@@ -13,17 +13,19 @@ Content-Type: application/json
 
 ### Request Body
 
-| Field         | Type     | Required | Description                              |
-| :------------ | :------- | :------- | :--------------------------------------- |
-| `originalUrl` | `string` | Yes      | The destination URL to shorten           |
-| `expiresAt`   | `string` | No       | ISO 8601 expiration timestamp            |
+| Field         | Type     | Required | Description                                                         |
+| :------------ | :------- | :------- | :------------------------------------------------------------------ |
+| `originalUrl` | `string` | Yes      | The destination URL to shorten (must include http:// or https://)   |
+| `expiresAt`   | `string` | No       | ISO 8601 expiration timestamp (must be in the future)               |
+| `customAlias` | `string` | No       | Optional custom short code (3–10 alphanumeric chars, non-reserved)  |
 
-### Example Request
+### Example Request (with Custom Alias)
 
 ```json
 {
   "originalUrl": "https://www.example.com/very/long/path",
-  "expiresAt": "2025-12-31T23:59:59"
+  "expiresAt": "2026-12-31T23:59:59",
+  "customAlias": "mybrand"
 }
 ```
 
@@ -33,11 +35,11 @@ Content-Type: application/json
 {
   "id": 1,
   "originalUrl": "https://www.example.com/very/long/path",
-  "shortCode": "aB72xQ",
+  "shortCode": "mybrand",
+  "shortUrl": "http://localhost:8080/mybrand",
   "clickCount": 0,
-  "createdAt": "2025-08-22T10:30:00",
-  "expiresAt": "2025-12-31T23:59:59",
-  "status": "ACTIVE"
+  "createdAt": "2026-10-19T10:30:00",
+  "expiresAt": "2026-12-31T23:59:59"
 }
 ```
 
@@ -90,6 +92,37 @@ Returns an array of all created URL objects.
 
 ---
 
+## Get Analytics Summary
+
+```http
+GET /api/urls/analytics/summary
+```
+
+Returns aggregate platform metrics across all shortened links.
+
+### Example Response (200 OK)
+
+```json
+{
+  "totalUrls": 42,
+  "totalClicks": 1280,
+  "activeUrls": 38,
+  "expiredUrls": 4,
+  "averageClicksPerUrl": 30.48,
+  "mostVisitedUrl": {
+    "id": 1,
+    "originalUrl": "https://www.example.com/popular",
+    "shortCode": "mybrand",
+    "shortUrl": "http://localhost:8080/mybrand",
+    "clickCount": 350,
+    "createdAt": "2026-10-19T10:30:00",
+    "expiresAt": null
+  }
+}
+```
+
+---
+
 ## Delete Short URL
 
 ```http
@@ -97,8 +130,8 @@ DELETE /api/urls/{shortCode}
 ```
 
 ### Response
-- **204 No Content** â€” Successfully deleted.
-- **404 Not Found** â€” Short code not found.
+- **204 No Content** — Successfully deleted.
+- **404 Not Found** — Short code not found.
 
 ---
 
@@ -139,9 +172,10 @@ All error responses follow a consistent JSON structure:
 }
 ```
 
-| Status Code | Description                                           |
-| :---------- | :---------------------------------------------------- |
-| 400         | Invalid URL format or validation failure              |
-| 404         | Short code not found, or no such route/resource       |
-| 410         | Short URL has expired                                 |
+| Status Code | Description                                                |
+| :---------- | :--------------------------------------------------------- |
+| 400         | Invalid URL format or validation failure                   |
+| 404         | Short code not found, or no such route/resource            |
+| 409         | Custom alias already in use (Conflict)                     |
+| 410         | Short URL has expired                                      |
 | 500         | Unexpected server error (details are logged, not returned) |

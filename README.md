@@ -11,7 +11,7 @@
 
 LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Real-Time Analytics Platform** built using **Spring Boot 3**, **Java 17**, **PostgreSQL 16**, **Docker Compose**, **Nginx**, and an automated **GitHub Actions CI/CD Pipeline**.
 
-**Current release:** `1.3.2` — see [CHANGELOG.md](CHANGELOG.md) for the full history.
+**Current release:** `1.4.0` — see [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ---
 
@@ -37,15 +37,17 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 ## Overview
 
 - **Random Base62 Short-Code Generation**: Generates a random 6-character short code from the Base62 character set (a-z, A-Z, 0-9) using `SecureRandom` — roughly 56.8 billion (62^6) combinations — re-rolling up to five times if the candidate code already exists (e.g. `http://localhost/aB72x`).
+- **Custom Short Code Aliases**: Supports optional, user-defined custom short codes (3–10 alphanumeric characters) with duplicate collision prevention (`409 Conflict`) and system routing reservation protection.
 - **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time. Click counts are incremented with a single atomic `UPDATE`, so simultaneous visits to the same link cannot overwrite one another.
 - **Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards every 3 seconds, without page refreshes. Polling pauses while the browser tab is in the background.
+- **Platform Analytics Summary API**: Dedicated `GET /api/urls/analytics/summary` endpoint providing cumulative links, total clicks, active vs expired counts, average clicks, and top-performing link metrics.
 - **Operational Health Check**: Built-in `/api/health` monitoring probe returns service status and database connectivity for Docker, container orchestration, and uptime monitors.
 - **Expiration Management**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`.
 - **Dual-Theme Analytics Dashboard**: Light and dark themes with a persisted toggle and a `prefers-color-scheme` default, sortable columns, per-row click bars, relative timestamps, real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), a backend reachability indicator, and link deletion behind an accessible confirmation dialog. Fully responsive, collapsing into stacked cards below 760px.
 - **Keyboard & Accessibility Support**: `/` focuses the dashboard filter and `Esc` closes the dialog or clears the filter; sort headers are keyboard-operable with `aria-sort` indicators, focus rings are visible throughout, and a `prefers-reduced-motion` guard disables animations.
 - **Input Validation & Error Handling**: Spring Bean Validation enforces URL formats, while `@ControllerAdvice` standardizes JSON error responses. Unmatched paths return `404`, and unexpected failures return a generic message — internal exception text (SQL, driver and path detail) is logged, never returned.
 - **Ultra-Lean Multi-Stage Docker Architecture**: Uses `jlink` to build a custom 20-module minimal JRE on Alpine 3.21, shrinking image size from 434MB to **197MB** (55% reduction).
-- **Comprehensive Unit & Integration Test Suite**: 60 JUnit 5 tests achieving **91% line coverage** and **90% branch coverage** via JaCoCo.
+- **Comprehensive Unit & Integration Test Suite**: 71 JUnit 5 tests achieving **91% line coverage** and **90% branch coverage** via JaCoCo.
 - **Automated CI/CD Pipeline**: GitHub Actions workflow compiles the code, runs JUnit 5 tests with JaCoCo reports against a throwaway PostgreSQL service container, validates frontend assets, and builds and publishes Docker images.
 
 ---
@@ -58,7 +60,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 | **Mean Response Time** | **80.1 ms** | Average end-to-end redirection latency under load |
 | **Line Coverage (JaCoCo)** | **91%** | 124/137 lines covered across service, controller, and entity layers |
 | **Branch Coverage (JaCoCo)** | **90%** | 27/30 conditional branches covered |
-| **Total Test Suite Count** | **60 tests** | Unit tests + MockMvc API controller integration tests |
+| **Total Test Suite Count** | **71 tests** | Unit tests + MockMvc API controller integration tests |
 | **Docker Image Footprint** | **197 MB** | 3-stage `jlink` custom JRE + Alpine base (reduced from 434 MB) |
 
 ---
@@ -195,10 +197,11 @@ Hibernate runs with `spring.jpa.hibernate.ddl-auto=update`, so the `urls` table 
 
 | Method | Endpoint | Description | Request Body | Success Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **POST** | `/api/urls` | Create short URL | `{ originalUrl, expiresAt? }` | `201 Created` |
+| **POST** | `/api/urls` | Create short URL | `{ originalUrl, expiresAt?, customAlias? }` | `201 Created` / `409 Conflict` |
 | **GET** | `/{shortCode}` | Redirect to original URL | None | `302 Found` |
 | **GET** | `/api/urls/{shortCode}/stats` | Get link statistics | None | `200 OK` |
 | **GET** | `/api/urls` | List all created URLs (newest first) | None | `200 OK` |
+| **GET** | `/api/urls/analytics/summary` | Aggregate platform metrics and link stats | None | `200 OK` |
 | **DELETE**| `/api/urls/{shortCode}` | Delete short URL | None | `204 No Content` |
 | **GET** | `/api/health` | Operational health and DB connectivity check | None | `200 OK` / `503 Unavailable` |
 
@@ -207,22 +210,22 @@ Hibernate runs with `spring.jpa.hibernate.ddl-auto=update`, so the `urls` table 
 ```bash
 curl -X POST http://localhost:8080/api/urls \
   -H "Content-Type: application/json" \
-  -d '{"originalUrl":"https://www.example.com/very/long/path","expiresAt":"2026-12-31T23:59:59"}'
+  -d '{"originalUrl":"https://www.example.com/very/long/path","expiresAt":"2026-12-31T23:59:59","customAlias":"mybrand"}'
 ```
 
 ```json
 {
   "id": 1,
   "originalUrl": "https://www.example.com/very/long/path",
-  "shortCode": "aB72xQ",
-  "shortUrl": "http://localhost:8080/aB72xQ",
+  "shortCode": "mybrand",
+  "shortUrl": "http://localhost:8080/mybrand",
   "clickCount": 0,
-  "createdAt": "2026-09-21T10:30:00",
+  "createdAt": "2026-10-19T10:30:00",
   "expiresAt": "2026-12-31T23:59:59"
 }
 ```
 
-`expiresAt` is optional, is interpreted as local wall-clock time (no timezone suffix), and must not be in the past. The stats endpoint returns the same fields minus `id`, plus a `status` of `ACTIVE` or `EXPIRED`.
+`expiresAt` and `customAlias` (3–10 alphanumeric characters) are optional. `expiresAt` is interpreted as local wall-clock time (no timezone suffix), and must not be in the past. The stats endpoint returns the same fields minus `id`, plus a `status` of `ACTIVE` or `EXPIRED`.
 
 ### Error responses
 
@@ -238,8 +241,9 @@ Every failure returns the same JSON shape:
 
 | Status | Raised when |
 | :--- | :--- |
-| `400 Bad Request` | Blank `originalUrl`, a scheme other than `http`/`https`, a malformed host, or an expiry in the past |
+| `400 Bad Request` | Blank `originalUrl`, a scheme other than `http`/`https`, a malformed host, an invalid or reserved custom alias, or an expiry in the past |
 | `404 Not Found` | Unknown short code, or any path that matches no route and no static asset |
+| `409 Conflict` | Requested `customAlias` is already claimed by another active or existing link |
 | `410 Gone` | The link exists but is past its `expiresAt` timestamp |
 | `500 Internal Server Error` | Unexpected failure — the response carries a generic message while the cause and stack trace stay in the server log |
 
