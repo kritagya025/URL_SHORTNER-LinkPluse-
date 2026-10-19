@@ -663,6 +663,39 @@ kbd {
     background: var(--border);
 }
 
+.create-alias {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 var(--sp-2);
+}
+
+.create-alias-prefix {
+    font-family: var(--font-mono);
+    font-size: var(--fs-14);
+    color: var(--text-3);
+    user-select: none;
+}
+
+.create-alias input {
+    width: 96px;
+    height: var(--control-h-lg);
+    background: transparent;
+    border: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-13);
+    color: var(--text);
+}
+
+.create-alias input::placeholder {
+    font-family: var(--font-sans);
+    color: var(--text-3);
+}
+
+.create-alias input:focus {
+    outline: none;
+}
+
 .expiry {
     position: relative;
 }
@@ -1988,6 +2021,19 @@ body.details-docked .scroll-top-btn {
     }
 
     .create-url input {
+        height: var(--touch);
+        font-size: var(--fs-16);
+    }
+
+    .create-alias {
+        padding: 0 var(--sp-2);
+        background: var(--surface-subtle);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+
+    .create-alias input {
+        width: 100%;
         height: var(--touch);
         font-size: var(--fs-16);
     }

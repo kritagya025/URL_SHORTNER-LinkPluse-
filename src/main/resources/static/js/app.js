@@ -45,6 +45,7 @@ const rowCache = new Map();
 const shortenForm = document.getElementById('shorten-form');
 const createBar = document.getElementById('create-bar');
 const originalUrlInput = document.getElementById('original-url');
+const customAliasInput = document.getElementById('custom-alias');
 const expiresAtInput = document.getElementById('expires-at');
 const shortenBtn = document.getElementById('shorten-btn');
 const shortenBtnText = shortenBtn.querySelector('.btn-text');
@@ -201,6 +202,7 @@ scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior:
 
 shortenForm.addEventListener('submit', handleCreateShortUrl);
 originalUrlInput.addEventListener('input', clearCreateError);
+if (customAliasInput) customAliasInput.addEventListener('input', clearCreateError);
 
 copyBtn.addEventListener('click', () => copyToClipboard(resultShortUrl.textContent, copyBtn));
 inspectResultBtn.addEventListener('click', () => {
@@ -402,6 +404,7 @@ async function handleCreateShortUrl(e) {
     clearCreateError();
     let originalUrl = originalUrlInput.value.trim();
     const expiresAtRaw = expiresAtInput.value;
+    const customAlias = customAliasInput ? customAliasInput.value.trim() : '';
 
     if (!originalUrl) {
         showCreateError('Enter a URL to shorten.');
@@ -418,6 +421,17 @@ async function handleCreateShortUrl(e) {
         return;
     }
 
+    if (customAlias) {
+        if (customAlias.length < 3 || customAlias.length > 10) {
+            showCreateError('Custom alias must be between 3 and 10 characters.');
+            return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(customAlias)) {
+            showCreateError('Custom alias can only contain alphanumeric characters.');
+            return;
+        }
+    }
+
     let expiresAt = null;
     if (expiresAtRaw) {
         const expiryDate = new Date(expiresAtRaw);
@@ -431,10 +445,15 @@ async function handleCreateShortUrl(e) {
     setLoading(true);
 
     try {
+        const payload = { originalUrl, expiresAt };
+        if (customAlias) {
+            payload.customAlias = customAlias;
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/urls`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ originalUrl, expiresAt })
+            body: JSON.stringify(payload)
         });
 
         const data = await readJson(response);
@@ -1293,6 +1312,7 @@ async function readJson(response) {
  */
 function humanizeError(err) {
     if (err instanceof TypeError) return NETWORK_ERROR_MESSAGE;
+    if (err && err.status === 409) return 'This custom alias is already in use. Please choose another.';
     return err.message || 'Something went wrong. Try again.';
 }
 
