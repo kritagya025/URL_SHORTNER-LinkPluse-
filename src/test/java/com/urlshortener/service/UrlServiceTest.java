@@ -4,6 +4,7 @@ import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
 import com.urlshortener.entity.Url;
+import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
 import com.urlshortener.exception.InvalidUrlException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
@@ -367,6 +368,85 @@ class UrlServiceTest {
         java.util.List<UrlResponse> results = urlService.getAllUrls();
 
         assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Success with custom alias")
+    void createShortUrl_WithCustomAlias_Success() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com/custom-page")
+                .customAlias("mybrand")
+                .build();
+
+        when(urlRepository.existsByShortCode("mybrand")).thenReturn(false);
+
+        Url savedEntity = Url.builder()
+                .id(99L)
+                .originalUrl("https://example.com/custom-page")
+                .shortCode("mybrand")
+                .clickCount(0L)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(urlRepository.save(any(Url.class))).thenReturn(savedEntity);
+
+        UrlResponse response = urlService.createShortUrl(request);
+
+        assertNotNull(response);
+        assertEquals("mybrand", response.getShortCode());
+        assertEquals("http://localhost:8080/mybrand", response.getShortUrl());
+        verify(shortCodeGenerator, never()).generateShortCode();
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Duplicate custom alias throws CustomAliasAlreadyExistsException")
+    void createShortUrl_DuplicateCustomAlias_ThrowsConflict() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com")
+                .customAlias("existing")
+                .build();
+
+        when(urlRepository.existsByShortCode("existing")).thenReturn(true);
+
+        assertThrows(CustomAliasAlreadyExistsException.class, () -> urlService.createShortUrl(request));
+        verify(urlRepository, never()).save(any(Url.class));
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Reserved keyword custom alias throws InvalidUrlException")
+    void createShortUrl_ReservedKeyword_ThrowsInvalidUrlException() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com")
+                .customAlias("api")
+                .build();
+
+        InvalidUrlException ex = assertThrows(InvalidUrlException.class, () -> urlService.createShortUrl(request));
+        assertTrue(ex.getMessage().contains("reserved"));
+        verify(urlRepository, never()).save(any(Url.class));
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Custom alias with invalid characters throws InvalidUrlException")
+    void createShortUrl_InvalidCharsCustomAlias_ThrowsInvalidUrlException() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com")
+                .customAlias("bad@alias!")
+                .build();
+
+        InvalidUrlException ex = assertThrows(InvalidUrlException.class, () -> urlService.createShortUrl(request));
+        assertTrue(ex.getMessage().contains("alphanumeric"));
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Custom alias shorter than 3 chars throws InvalidUrlException")
+    void createShortUrl_TooShortCustomAlias_ThrowsInvalidUrlException() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com")
+                .customAlias("ab")
+                .build();
+
+        InvalidUrlException ex = assertThrows(InvalidUrlException.class, () -> urlService.createShortUrl(request));
+        assertTrue(ex.getMessage().contains("between 3 and 10"));
     }
 }
 

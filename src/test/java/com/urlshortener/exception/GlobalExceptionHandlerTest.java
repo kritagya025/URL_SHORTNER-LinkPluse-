@@ -60,6 +60,19 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("handleCustomAliasExists returns 409 Conflict with conflict message")
+    void handleCustomAliasExists_Returns409() {
+        CustomAliasAlreadyExistsException ex = new CustomAliasAlreadyExistsException("Custom alias 'mycode' is already in use");
+        ResponseEntity<ErrorResponse> response = handler.handleCustomAliasExists(ex);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(409, response.getBody().getStatus());
+        assertEquals("Custom alias 'mycode' is already in use", response.getBody().getMessage());
+        assertNotNull(response.getBody().getTimestamp());
+    }
+
+    @Test
     @DisplayName("handleValidationErrors extracts first field error message")
     void handleValidationErrors_WithFieldError_Returns400() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);

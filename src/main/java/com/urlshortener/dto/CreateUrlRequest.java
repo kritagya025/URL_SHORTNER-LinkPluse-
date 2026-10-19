@@ -29,4 +29,10 @@ public class CreateUrlRequest {
      * Optional expiration date-time for the shortened link.
      */
     private LocalDateTime expiresAt;
+
+    /**
+     * Optional custom alias for the shortened URL.
+     * Must be between 3 and 10 alphanumeric characters.
+     */
+    private String customAlias;
 }

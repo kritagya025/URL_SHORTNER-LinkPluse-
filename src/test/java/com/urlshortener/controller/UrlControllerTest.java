@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
+import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
 import com.urlshortener.service.UrlService;
@@ -59,6 +60,52 @@ class UrlControllerTest {
                 .andExpect(jsonPath("$.shortCode").value("aB72x"))
                 .andExpect(jsonPath("$.shortUrl").value("http://localhost:8080/aB72x"))
                 .andExpect(jsonPath("$.clickCount").value(0));
+    }
+
+    @Test
+    @DisplayName("POST /api/urls - With custom alias returns 201 Created and custom shortCode")
+    void createShortUrl_WithCustomAlias_Returns201() throws Exception {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com/test")
+                .customAlias("mybrand")
+                .build();
+
+        UrlResponse response = UrlResponse.builder()
+                .id(2L)
+                .originalUrl("https://example.com/test")
+                .shortCode("mybrand")
+                .shortUrl("http://localhost:8080/mybrand")
+                .clickCount(0L)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(urlService.createShortUrl(any(CreateUrlRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.shortCode").value("mybrand"))
+                .andExpect(jsonPath("$.shortUrl").value("http://localhost:8080/mybrand"));
+    }
+
+    @Test
+    @DisplayName("POST /api/urls - Duplicate custom alias returns 409 Conflict")
+    void createShortUrl_DuplicateCustomAlias_Returns409() throws Exception {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com/test")
+                .customAlias("inuse")
+                .build();
+
+        when(urlService.createShortUrl(any(CreateUrlRequest.class)))
+                .thenThrow(new CustomAliasAlreadyExistsException("Custom alias 'inuse' is already in use"));
+
+        mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Custom alias 'inuse' is already in use"));
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
 import com.urlshortener.entity.Url;
+import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
 import com.urlshortener.exception.InvalidUrlException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
@@ -18,6 +19,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +30,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UrlService {
+
+    private static final Set<String> RESERVED_WORDS = Set.of(
+            "api", "health", "css", "js", "static", "assets", "favicon.ico", "robots.txt", "sitemap.xml", "index.html", "admin", "docs", "swagger-ui"
+    );
 
     private final UrlRepository urlRepository;
     private final ShortCodeGenerator shortCodeGenerator;
@@ -44,7 +50,17 @@ public class UrlService {
             throw new InvalidUrlException("Expiration date cannot be in the past");
         }
 
-        String shortCode = generateUniqueShortCode();
+        String shortCode;
+        String customAlias = request.getCustomAlias() != null ? request.getCustomAlias().trim() : null;
+        if (customAlias != null && !customAlias.isEmpty()) {
+            validateCustomAlias(customAlias);
+            if (urlRepository.existsByShortCode(customAlias)) {
+                throw new CustomAliasAlreadyExistsException("Custom alias '" + customAlias + "' is already in use");
+            }
+            shortCode = customAlias;
+        } else {
+            shortCode = generateUniqueShortCode();
+        }
 
         Url url = Url.builder()
                 .originalUrl(originalUrl)
@@ -135,6 +151,18 @@ public class UrlService {
         }
         if (uri.getHost() == null) {
             throw new InvalidUrlException("Invalid URL host structure");
+        }
+    }
+
+    private void validateCustomAlias(String customAlias) {
+        if (customAlias.length() < 3 || customAlias.length() > 10) {
+            throw new InvalidUrlException("Custom alias must be between 3 and 10 characters");
+        }
+        if (!customAlias.matches("^[a-zA-Z0-9]+$")) {
+            throw new InvalidUrlException("Custom alias can only contain alphanumeric characters");
+        }
+        if (RESERVED_WORDS.contains(customAlias.toLowerCase())) {
+            throw new InvalidUrlException("Custom alias '" + customAlias + "' is a reserved keyword");
         }
     }
 
