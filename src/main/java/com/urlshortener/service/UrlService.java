@@ -3,6 +3,7 @@ package com.urlshortener.service;
 import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
+import com.urlshortener.dto.UrlSummaryResponse;
 import com.urlshortener.entity.Url;
 import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
@@ -116,6 +117,35 @@ public class UrlService {
                 .sorted((u1, u2) -> u2.getCreatedAt().compareTo(u1.getCreatedAt()))
                 .map(this::mapToUrlResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public UrlSummaryResponse getAnalyticsSummary() {
+        List<Url> urls = urlRepository.findAll();
+        long totalUrls = urls.size();
+        long totalClicks = urls.stream().mapToLong(Url::getClickCount).sum();
+        LocalDateTime now = LocalDateTime.now();
+        long expiredUrls = urls.stream()
+                .filter(u -> u.getExpiresAt() != null && now.isAfter(u.getExpiresAt()))
+                .count();
+        long activeUrls = totalUrls - expiredUrls;
+        double avg = totalUrls > 0 ? (double) totalClicks / totalUrls : 0.0;
+        double averageClicksPerUrl = Math.round(avg * 100.0) / 100.0;
+
+        UrlResponse mostVisitedUrl = urls.stream()
+                .filter(u -> u.getClickCount() != null && u.getClickCount() > 0)
+                .max((u1, u2) -> Long.compare(u1.getClickCount(), u2.getClickCount()))
+                .map(this::mapToUrlResponse)
+                .orElse(null);
+
+        return UrlSummaryResponse.builder()
+                .totalUrls(totalUrls)
+                .totalClicks(totalClicks)
+                .activeUrls(activeUrls)
+                .expiredUrls(expiredUrls)
+                .averageClicksPerUrl(averageClicksPerUrl)
+                .mostVisitedUrl(mostVisitedUrl)
+                .build();
     }
 
     @Transactional

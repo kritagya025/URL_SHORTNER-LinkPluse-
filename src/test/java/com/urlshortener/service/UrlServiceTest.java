@@ -3,6 +3,7 @@ package com.urlshortener.service;
 import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
+import com.urlshortener.dto.UrlSummaryResponse;
 import com.urlshortener.entity.Url;
 import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
@@ -447,6 +448,64 @@ class UrlServiceTest {
 
         InvalidUrlException ex = assertThrows(InvalidUrlException.class, () -> urlService.createShortUrl(request));
         assertTrue(ex.getMessage().contains("between 3 and 10"));
+    }
+
+    @Test
+    @DisplayName("Get Analytics Summary - Computes correct aggregate metrics")
+    void getAnalyticsSummary_WithLinks_ReturnsAccurateMetrics() {
+        Url activeUrl1 = Url.builder()
+                .id(1L)
+                .originalUrl("https://example.com/one")
+                .shortCode("one111")
+                .clickCount(10L)
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        Url activeUrl2 = Url.builder()
+                .id(2L)
+                .originalUrl("https://example.com/two")
+                .shortCode("two222")
+                .clickCount(30L)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Url expiredUrl = Url.builder()
+                .id(3L)
+                .originalUrl("https://example.com/expired")
+                .shortCode("exp333")
+                .clickCount(5L)
+                .createdAt(LocalDateTime.now().minusDays(5))
+                .expiresAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        when(urlRepository.findAll()).thenReturn(java.util.List.of(activeUrl1, activeUrl2, expiredUrl));
+
+        UrlSummaryResponse summary = urlService.getAnalyticsSummary();
+
+        assertNotNull(summary);
+        assertEquals(3L, summary.getTotalUrls());
+        assertEquals(45L, summary.getTotalClicks());
+        assertEquals(2L, summary.getActiveUrls());
+        assertEquals(1L, summary.getExpiredUrls());
+        assertEquals(15.0, summary.getAverageClicksPerUrl());
+        assertNotNull(summary.getMostVisitedUrl());
+        assertEquals("two222", summary.getMostVisitedUrl().getShortCode());
+    }
+
+    @Test
+    @DisplayName("Get Analytics Summary - Empty database returns zeros and null mostVisited")
+    void getAnalyticsSummary_EmptyDatabase_ReturnsZeros() {
+        when(urlRepository.findAll()).thenReturn(java.util.List.of());
+
+        UrlSummaryResponse summary = urlService.getAnalyticsSummary();
+
+        assertNotNull(summary);
+        assertEquals(0L, summary.getTotalUrls());
+        assertEquals(0L, summary.getTotalClicks());
+        assertEquals(0L, summary.getActiveUrls());
+        assertEquals(0L, summary.getExpiredUrls());
+        assertEquals(0.0, summary.getAverageClicksPerUrl());
+        assertNull(summary.getMostVisitedUrl());
     }
 }
 

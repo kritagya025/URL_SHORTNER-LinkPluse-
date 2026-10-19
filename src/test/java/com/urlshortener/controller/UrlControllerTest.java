@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
+import com.urlshortener.dto.UrlSummaryResponse;
 import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
@@ -262,6 +263,28 @@ class UrlControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("GET /api/urls/analytics/summary - Success returns 200 OK with metrics")
+    void getAnalyticsSummary_Success() throws Exception {
+        UrlSummaryResponse summary = UrlSummaryResponse.builder()
+                .totalUrls(10L)
+                .totalClicks(150L)
+                .activeUrls(8L)
+                .expiredUrls(2L)
+                .averageClicksPerUrl(15.0)
+                .build();
+
+        when(urlService.getAnalyticsSummary()).thenReturn(summary);
+
+        mockMvc.perform(get("/api/urls/analytics/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalUrls").value(10))
+                .andExpect(jsonPath("$.totalClicks").value(150))
+                .andExpect(jsonPath("$.activeUrls").value(8))
+                .andExpect(jsonPath("$.expiredUrls").value(2))
+                .andExpect(jsonPath("$.averageClicksPerUrl").value(15.0));
     }
 }
 

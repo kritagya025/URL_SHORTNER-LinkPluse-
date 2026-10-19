@@ -3,6 +3,7 @@ package com.urlshortener.controller;
 import com.urlshortener.dto.CreateUrlRequest;
 import com.urlshortener.dto.UrlResponse;
 import com.urlshortener.dto.UrlStatsResponse;
+import com.urlshortener.dto.UrlSummaryResponse;
 import com.urlshortener.service.UrlService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,17 @@ public class UrlController {
     public ResponseEntity<List<UrlResponse>> getAllUrls() {
         List<UrlResponse> urls = urlService.getAllUrls();
         return ResponseEntity.ok(urls);
+    }
+
+    /**
+     * Retrieves overall system and link analytics summary.
+     *
+     * @return UrlSummaryResponse containing aggregate system metrics
+     */
+    @GetMapping("/analytics/summary")
+    public ResponseEntity<UrlSummaryResponse> getAnalyticsSummary() {
+        UrlSummaryResponse summary = urlService.getAnalyticsSummary();
+        return ResponseEntity.ok(summary);
     }
 
     /**
