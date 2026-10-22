@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST controller for managing short URLs, metrics, and listing active links.
@@ -70,6 +72,20 @@ public class UrlController {
     public ResponseEntity<UrlStatsResponse> getUrlStats(@PathVariable String shortCode) {
         UrlStatsResponse stats = urlService.getStats(shortCode);
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Purges all expired URL records from the database.
+     *
+     * @return 200 OK with count of deleted URLs and status message
+     */
+    @DeleteMapping("/expired")
+    public ResponseEntity<Map<String, Object>> deleteExpiredUrls() {
+        int deletedCount = urlService.deleteExpiredUrls();
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("deletedCount", deletedCount);
+        response.put("message", "Successfully purged " + deletedCount + " expired URL" + (deletedCount == 1 ? "" : "s"));
+        return ResponseEntity.ok(response);
     }
 
     /**

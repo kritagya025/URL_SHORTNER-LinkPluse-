@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public class UrlService {
 
     private static final Set<String> RESERVED_WORDS = Set.of(
-            "api", "health", "css", "js", "static", "assets", "favicon.ico", "robots.txt", "sitemap.xml", "index.html", "admin", "docs", "swagger-ui"
+            "api", "health", "css", "js", "static", "assets", "favicon.ico", "robots.txt", "sitemap.xml", "index.html", "admin", "docs", "swagger-ui", "expired"
     );
 
     private final UrlRepository urlRepository;
@@ -154,6 +154,14 @@ public class UrlService {
                 .orElseThrow(() -> new ShortUrlNotFoundException("Short URL code '" + shortCode + "' not found"));
         urlRepository.delete(url);
         log.info("Deleted short URL code '{}'", shortCode);
+    }
+
+    @Transactional
+    public int deleteExpiredUrls() {
+        LocalDateTime now = LocalDateTime.now();
+        int deletedCount = urlRepository.deleteExpiredUrls(now);
+        log.info("Purged {} expired URLs", deletedCount);
+        return deletedCount;
     }
 
     private String generateUniqueShortCode() {

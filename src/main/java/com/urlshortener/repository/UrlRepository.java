@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -44,4 +45,14 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
     @Modifying
     @Query("UPDATE Url u SET u.clickCount = u.clickCount + 1 WHERE u.id = :id")
     void incrementClickCount(@Param("id") Long id);
+
+    /**
+     * Deletes all Url records whose expiration date has passed.
+     *
+     * @param now Current timestamp threshold
+     * @return Number of deleted records
+     */
+    @Modifying
+    @Query("DELETE FROM Url u WHERE u.expiresAt IS NOT NULL AND u.expiresAt < :now")
+    int deleteExpiredUrls(@Param("now") LocalDateTime now);
 }

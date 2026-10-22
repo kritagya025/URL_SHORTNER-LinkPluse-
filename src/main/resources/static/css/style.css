@@ -1053,6 +1053,16 @@ kbd {
     appearance: none;
 }
 
+.purge-btn {
+    color: var(--text-2);
+}
+
+.purge-btn:hover:not(:disabled) {
+    color: var(--danger-text);
+    border-color: var(--danger-border);
+    background: var(--danger-subtle);
+}
+
 .refresh-btn {
     color: var(--text-2);
 }
@@ -2121,7 +2131,7 @@ body.details-docked .scroll-top-btn {
 
     .links-tools {
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: 1fr auto auto;
     }
 
     .search {
@@ -2146,19 +2156,28 @@ body.details-docked .scroll-top-btn {
         font-size: var(--fs-16);
     }
 
-    .refresh-btn {
+    .purge-btn {
         grid-row: 2;
         grid-column: 2;
         height: var(--touch);
+        width: var(--touch);
+        padding: 0;
     }
 
-    .refresh-btn .btn-label {
+    .purge-btn .btn-label {
         display: none;
     }
 
     .refresh-btn {
+        grid-row: 2;
+        grid-column: 3;
+        height: var(--touch);
         width: var(--touch);
         padding: 0;
+    }
+
+    .refresh-btn .btn-label {
+        display: none;
     }
 
     /* Table becomes a compact two-line list */

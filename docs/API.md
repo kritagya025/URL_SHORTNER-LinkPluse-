@@ -135,6 +135,28 @@ DELETE /api/urls/{shortCode}
 
 ---
 
+## Purge Expired URLs
+
+```http
+DELETE /api/urls/expired
+```
+
+Bulk deletes all short URL records whose expiration timestamp has elapsed.
+
+### Example Response (200 OK)
+
+```json
+{
+  "deletedCount": 4,
+  "message": "Successfully purged 4 expired URLs"
+}
+```
+
+### Response Codes
+- **200 OK** — Expired links successfully purged (or 0 purged if none expired).
+
+---
+
 ## Service Health Check
 
 ```http

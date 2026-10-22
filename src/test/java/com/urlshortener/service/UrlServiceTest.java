@@ -507,5 +507,29 @@ class UrlServiceTest {
         assertEquals(0.0, summary.getAverageClicksPerUrl());
         assertNull(summary.getMostVisitedUrl());
     }
+
+    @Test
+    @DisplayName("Delete Expired URLs - Successfully calls repository and returns deleted count")
+    void deleteExpiredUrls_Success() {
+        when(urlRepository.deleteExpiredUrls(any(LocalDateTime.class))).thenReturn(4);
+
+        int count = urlService.deleteExpiredUrls();
+
+        assertEquals(4, count);
+        verify(urlRepository, times(1)).deleteExpiredUrls(any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Reserved keyword 'expired' as custom alias throws InvalidUrlException")
+    void createShortUrl_ReservedKeywordExpired_ThrowsException() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com/test")
+                .customAlias("expired")
+                .build();
+
+        InvalidUrlException ex = assertThrows(InvalidUrlException.class,
+                () -> urlService.createShortUrl(request));
+        assertTrue(ex.getMessage().contains("reserved keyword"));
+    }
 }
 

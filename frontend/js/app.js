@@ -35,6 +35,7 @@ let detailsTrigger = null;
 let detailsHasData = false;
 
 let pendingDeleteCode = null;
+let pendingPurgeExpired = false;
 let deleteTrigger = null;
 let isDeleting = false;
 
@@ -114,6 +115,7 @@ const connNotice = document.getElementById('conn-notice');
 const connNoticeText = document.getElementById('conn-notice-text');
 const syncStatus = document.getElementById('sync-status');
 const syncText = document.getElementById('sync-text');
+const purgeExpiredBtn = document.getElementById('purge-expired-btn');
 
 const overviewTotalUrls = document.getElementById('overview-total-urls');
 const overviewUrlsWord = document.getElementById('overview-urls-word');
@@ -847,13 +849,23 @@ function updateOverviewMetrics(urls) {
         if (!isExpired(url)) activeCount++;
     });
 
+    const expiredCount = urls.length - activeCount;
+
     document.getElementById('links-summary').classList.remove('hidden');
     overviewTotalUrls.textContent = formatNumber(urls.length);
     overviewUrlsWord.textContent = urls.length === 1 ? 'link' : 'links';
     overviewTotalClicks.textContent = formatNumber(totalClicks);
     overviewClicksWord.textContent = totalClicks === 1 ? 'click' : 'clicks';
     overviewActiveUrls.textContent = formatNumber(activeCount);
-    overviewExpiredUrls.textContent = formatNumber(urls.length - activeCount);
+    overviewExpiredUrls.textContent = formatNumber(expiredCount);
+
+    if (purgeExpiredBtn) {
+        if (expiredCount > 0) {
+            purgeExpiredBtn.classList.remove('hidden');
+        } else {
+            purgeExpiredBtn.classList.add('hidden');
+        }
+    }
 }
 
 /**
@@ -1127,7 +1139,9 @@ function matchesStatus(url) {
  */
 function requestDelete(shortCode, trigger) {
     pendingDeleteCode = shortCode;
+    pendingPurgeExpired = false;
     deleteTrigger = trigger || document.activeElement;
+    document.getElementById('confirm-title').textContent = 'Delete short link?';
     confirmText.innerHTML = `This will permanently remove the short link <code>${escapeHtml(shortCode)}</code> and its click count.`;
     confirmError.textContent = '';
     setDeleting(false);
@@ -1140,6 +1154,8 @@ function closeConfirm({ restoreFocus = true } = {}) {
     confirmModal.classList.add('hidden');
     releaseBackground('modal');
     pendingDeleteCode = null;
+    pendingPurgeExpired = false;
+    document.getElementById('confirm-title').textContent = 'Delete short link?';
     if (restoreFocus && deleteTrigger && deleteTrigger.isConnected) deleteTrigger.focus({ preventScroll: true });
     deleteTrigger = null;
 }
@@ -1161,9 +1177,68 @@ confirmModal.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') trapFocus(confirmModal, e);
 });
 
+if (purgeExpiredBtn) {
+    purgeExpiredBtn.addEventListener('click', () => {
+        const expiredCount = allUrls.filter(isExpired).length;
+        if (expiredCount === 0) return;
+        pendingPurgeExpired = true;
+        pendingDeleteCode = null;
+        deleteTrigger = purgeExpiredBtn;
+        document.getElementById('confirm-title').textContent = 'Purge expired links?';
+        confirmText.innerHTML = `This will permanently remove <strong>${expiredCount}</strong> expired short ${expiredCount === 1 ? 'link' : 'links'} and clear their click records.`;
+        confirmError.textContent = '';
+        setDeleting(false);
+        confirmModal.classList.remove('hidden');
+        isolateBackground(confirmModal, 'modal');
+        confirmCancel.focus();
+    });
+}
+
 confirmAccept.addEventListener('click', async () => {
+    if (isDeleting) return;
+
+    if (pendingPurgeExpired) {
+        setDeleting(true);
+        confirmError.textContent = '';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/urls/expired`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new ApiError(data.message || 'Failed to purge expired URLs', response.status);
+            }
+
+            const result = await response.json().catch(() => ({ deletedCount: 0 }));
+            const count = result.deletedCount !== undefined ? result.deletedCount : 0;
+
+            setDeleting(false);
+            closeConfirm({ restoreFocus: false });
+
+            if (detailsCode && allUrls.some(u => u.shortCode === detailsCode && isExpired(u))) {
+                closeDetails({ restoreFocus: false });
+            }
+
+            mutationVersion++;
+            allUrls = allUrls.filter(u => !isExpired(u));
+            updateOverviewMetrics(allUrls);
+            renderUrlTable();
+
+            showToast(`Purged ${count} expired link${count === 1 ? '' : 's'}`, 'success');
+            (deleteTrigger && deleteTrigger.isConnected ? deleteTrigger : tableSearch).focus({ preventScroll: true });
+            reloadAfterMutation();
+        } catch (err) {
+            setDeleting(false);
+            confirmError.textContent = humanizeError(err);
+            confirmCancel.focus();
+        }
+        return;
+    }
+
     const shortCode = pendingDeleteCode;
-    if (!shortCode || isDeleting) return;
+    if (!shortCode) return;
 
     setDeleting(true);
     confirmError.textContent = '';

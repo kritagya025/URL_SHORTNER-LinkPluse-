@@ -263,6 +263,27 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Purge Expired URLs",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls/expired",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls",
+						"expired"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

@@ -4,6 +4,15 @@ All notable changes to the LinkPulse project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-22
+
+### Added
+- **Bulk Purge Expired URLs API**: Introduced `DELETE /api/urls/expired` endpoint to permanently purge all expired short links in a single database operation, returning the purged record count.
+- **Reserved Keyword Protection**: Added `expired` to system reserved keywords in `UrlService` to prevent custom alias collisions with the purge route.
+- **Frontend Purge Expired Action**: Added an accessible, interactive "Purge expired" button to the links toolbar across both `frontend/` and embedded static templates, appearing automatically when expired links exist and prompting with a modal confirmation.
+- **Comprehensive Test Suite**: Added unit and MockMvc integration tests for expired link purging and keyword reservation, expanding the test suite to 75 passing tests with 98% instruction coverage.
+- **Postman & API Documentation**: Documented the `DELETE /api/urls/expired` endpoint in `docs/API.md` and added test request templates to `URL_Shortener.postman_collection.json`.
+
 ## [1.4.0] - 2026-10-19
 
 ### Added

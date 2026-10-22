@@ -286,5 +286,31 @@ class UrlControllerTest {
                 .andExpect(jsonPath("$.expiredUrls").value(2))
                 .andExpect(jsonPath("$.averageClicksPerUrl").value(15.0));
     }
+
+    @Test
+    @DisplayName("DELETE /api/urls/expired - Success returns 200 OK with deleted count")
+    void deleteExpiredUrls_Success() throws Exception {
+        when(urlService.deleteExpiredUrls()).thenReturn(3);
+
+        mockMvc.perform(delete("/api/urls/expired"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deletedCount").value(3))
+                .andExpect(jsonPath("$.message").value("Successfully purged 3 expired URLs"));
+
+        verify(urlService, times(1)).deleteExpiredUrls();
+    }
+
+    @Test
+    @DisplayName("DELETE /api/urls/expired - Zero expired returns 200 OK with zero count")
+    void deleteExpiredUrls_ZeroCount_Returns200() throws Exception {
+        when(urlService.deleteExpiredUrls()).thenReturn(0);
+
+        mockMvc.perform(delete("/api/urls/expired"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deletedCount").value(0))
+                .andExpect(jsonPath("$.message").value("Successfully purged 0 expired URLs"));
+
+        verify(urlService, times(1)).deleteExpiredUrls();
+    }
 }
 
