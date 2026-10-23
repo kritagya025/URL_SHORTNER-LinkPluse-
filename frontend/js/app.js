@@ -806,7 +806,7 @@ function closeDetails({ restoreFocus = true } = {}) {
    -------------------------------------------------------------------------- */
 
 /**
- * Fetches every short link, refreshes the summary and repaints the table.
+ * Fetches short links and system analytics, refreshes summary counters, and updates the dashboard.
  * Concurrent callers share one in-flight request.
  *
  * @returns {Promise<boolean>} Whether the load succeeded
@@ -818,10 +818,14 @@ function loadAllUrls() {
         const started = performance.now();
         const version = mutationVersion;
         try {
-            const response = await fetch(`${API_BASE_URL}/api/urls`);
-            if (!response.ok) throw new Error('Failed to fetch URLs');
+            const [urlsResponse, summaryResponse] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/urls`),
+                fetch(`${API_BASE_URL}/api/urls/analytics/summary`).catch(() => null)
+            ]);
 
-            const urls = await response.json();
+            if (!urlsResponse.ok) throw new Error('Failed to fetch URLs');
+
+            const urls = await urlsResponse.json();
             // A create or delete finished while this request was in flight; its data is stale
             if (version !== mutationVersion) return true;
 
@@ -831,7 +835,14 @@ function loadAllUrls() {
             hasLoadedOnce = true;
             setApiStatus('online');
 
-            updateOverviewMetrics(allUrls);
+            if (summaryResponse && summaryResponse.ok) {
+                const summary = await summaryResponse.json().catch(() => null);
+                if (summary) applyAnalyticsSummary(summary);
+                else updateOverviewMetrics(allUrls);
+            } else {
+                updateOverviewMetrics(allUrls);
+            }
+
             renderUrlTable();
 
             // Silent background refresh for the details panel when it is open
@@ -848,6 +859,24 @@ function loadAllUrls() {
     })();
 
     return loadInFlight;
+}
+
+function applyAnalyticsSummary(summary) {
+    document.getElementById('links-summary').classList.remove('hidden');
+    overviewTotalUrls.textContent = formatNumber(summary.totalUrls);
+    overviewUrlsWord.textContent = summary.totalUrls === 1 ? 'link' : 'links';
+    overviewTotalClicks.textContent = formatNumber(summary.totalClicks);
+    overviewClicksWord.textContent = summary.totalClicks === 1 ? 'click' : 'clicks';
+    overviewActiveUrls.textContent = formatNumber(summary.activeUrls);
+    overviewExpiredUrls.textContent = formatNumber(summary.expiredUrls);
+
+    if (purgeExpiredBtn) {
+        if (summary.expiredUrls > 0) {
+            purgeExpiredBtn.classList.remove('hidden');
+        } else {
+            purgeExpiredBtn.classList.add('hidden');
+        }
+    }
 }
 
 /**
