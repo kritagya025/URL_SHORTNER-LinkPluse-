@@ -312,5 +312,44 @@ class UrlControllerTest {
 
         verify(urlService, times(1)).deleteExpiredUrls();
     }
+
+    @Test
+    @DisplayName("GET /api/urls/{shortCode}/qr - Success returns PNG image bytes")
+    void getQrCode_Success() throws Exception {
+        byte[] dummyPng = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47};
+        when(urlService.getQrCodeForShortCode("abc123", 300)).thenReturn(dummyPng);
+
+        mockMvc.perform(get("/api/urls/abc123/qr"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", MediaType.IMAGE_PNG_VALUE))
+                .andExpect(content().bytes(dummyPng));
+
+        verify(urlService, times(1)).getQrCodeForShortCode("abc123", 300);
+    }
+
+    @Test
+    @DisplayName("GET /api/urls/{shortCode}/qr - Custom size query parameter is passed")
+    void getQrCode_CustomSize_Success() throws Exception {
+        byte[] dummyPng = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47};
+        when(urlService.getQrCodeForShortCode("abc123", 512)).thenReturn(dummyPng);
+
+        mockMvc.perform(get("/api/urls/abc123/qr").param("size", "512"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", MediaType.IMAGE_PNG_VALUE))
+                .andExpect(content().bytes(dummyPng));
+
+        verify(urlService, times(1)).getQrCodeForShortCode("abc123", 512);
+    }
+
+    @Test
+    @DisplayName("GET /api/urls/{shortCode}/qr - Not found returns 404")
+    void getQrCode_NotFound_Returns404() throws Exception {
+        when(urlService.getQrCodeForShortCode("notfound", 300))
+                .thenThrow(new ShortUrlNotFoundException("Short URL code 'notfound' not found"));
+
+        mockMvc.perform(get("/api/urls/notfound/qr"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
 }
 

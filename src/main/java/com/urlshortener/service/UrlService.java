@@ -38,6 +38,7 @@ public class UrlService {
 
     private final UrlRepository urlRepository;
     private final ShortCodeGenerator shortCodeGenerator;
+    private final QrCodeService qrCodeService;
 
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
@@ -109,6 +110,21 @@ public class UrlService {
                 .expiresAt(url.getExpiresAt())
                 .status(status)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] getQrCodeForShortCode(String shortCode, int size) {
+        Url url = urlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new ShortUrlNotFoundException("Short URL code '" + shortCode + "' not found"));
+
+        if (isExpired(url)) {
+            log.warn("Attempted QR code generation for expired short URL code '{}'", shortCode);
+            throw new ExpiredUrlException("Short URL code '" + shortCode + "' has expired");
+        }
+
+        int clampedSize = Math.max(64, Math.min(size, 1024));
+        String fullShortUrl = buildShortUrl(url.getShortCode());
+        return qrCodeService.generateQrCode(fullShortUrl, clampedSize, clampedSize);
     }
 
     @Transactional(readOnly = true)

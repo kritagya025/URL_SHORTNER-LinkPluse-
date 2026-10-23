@@ -35,6 +35,9 @@ class UrlServiceTest {
     @Mock
     private ShortCodeGenerator shortCodeGenerator;
 
+    @Mock
+    private QrCodeService qrCodeService;
+
     @InjectMocks
     private UrlService urlService;
 
@@ -530,6 +533,71 @@ class UrlServiceTest {
         InvalidUrlException ex = assertThrows(InvalidUrlException.class,
                 () -> urlService.createShortUrl(request));
         assertTrue(ex.getMessage().contains("reserved keyword"));
+    }
+
+    @Test
+    @DisplayName("Get QR Code - Success returns byte array")
+    void getQrCodeForShortCode_Success() {
+        Url url = Url.builder()
+                .id(1L)
+                .shortCode("abc123")
+                .originalUrl("https://example.com")
+                .createdAt(LocalDateTime.now())
+                .build();
+        byte[] dummyPng = new byte[]{1, 2, 3};
+
+        when(urlRepository.findByShortCode("abc123")).thenReturn(Optional.of(url));
+        when(qrCodeService.generateQrCode("http://localhost:8080/abc123", 300, 300)).thenReturn(dummyPng);
+
+        byte[] result = urlService.getQrCodeForShortCode("abc123", 300);
+
+        assertArrayEquals(dummyPng, result);
+        verify(qrCodeService, times(1)).generateQrCode("http://localhost:8080/abc123", 300, 300);
+    }
+
+    @Test
+    @DisplayName("Get QR Code - Clamps size between 64 and 1024")
+    void getQrCodeForShortCode_ClampsSize() {
+        Url url = Url.builder()
+                .id(1L)
+                .shortCode("clamp1")
+                .originalUrl("https://example.com")
+                .createdAt(LocalDateTime.now())
+                .build();
+        byte[] dummyPng = new byte[]{1, 2, 3};
+
+        when(urlRepository.findByShortCode("clamp1")).thenReturn(Optional.of(url));
+        when(qrCodeService.generateQrCode(anyString(), eq(64), eq(64))).thenReturn(dummyPng);
+
+        byte[] result = urlService.getQrCodeForShortCode("clamp1", 10); // Underflow to 64
+        assertNotNull(result);
+        verify(qrCodeService).generateQrCode("http://localhost:8080/clamp1", 64, 64);
+    }
+
+    @Test
+    @DisplayName("Get QR Code - Non-existent short code throws ShortUrlNotFoundException")
+    void getQrCodeForShortCode_NotFound_ThrowsException() {
+        when(urlRepository.findByShortCode("ghost9")).thenReturn(Optional.empty());
+
+        assertThrows(ShortUrlNotFoundException.class,
+                () -> urlService.getQrCodeForShortCode("ghost9", 300));
+    }
+
+    @Test
+    @DisplayName("Get QR Code - Expired short code throws ExpiredUrlException")
+    void getQrCodeForShortCode_Expired_ThrowsException() {
+        Url expiredUrl = Url.builder()
+                .id(1L)
+                .shortCode("exp123")
+                .originalUrl("https://example.com")
+                .createdAt(LocalDateTime.now().minusDays(2))
+                .expiresAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        when(urlRepository.findByShortCode("exp123")).thenReturn(Optional.of(expiredUrl));
+
+        assertThrows(ExpiredUrlException.class,
+                () -> urlService.getQrCodeForShortCode("exp123", 300));
     }
 }
 

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,6 +73,23 @@ public class UrlController {
     public ResponseEntity<UrlStatsResponse> getUrlStats(@PathVariable String shortCode) {
         UrlStatsResponse stats = urlService.getStats(shortCode);
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Generates a PNG QR code image for a shortened link.
+     *
+     * @param shortCode Unique identifier code of the short link
+     * @param size      Pixel dimensions of the square QR code (defaults to 300)
+     * @return 200 OK with PNG image data
+     */
+    @GetMapping(value = "/{shortCode}/qr", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> getQrCode(
+            @PathVariable String shortCode,
+            @RequestParam(defaultValue = "300") int size) {
+        byte[] qrImage = urlService.getQrCodeForShortCode(shortCode, size);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(qrImage);
     }
 
     /**
