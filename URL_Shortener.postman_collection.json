@@ -284,6 +284,70 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Generate QR Code",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls/:shortCode/qr?size=300",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls",
+						":shortCode",
+						"qr"
+					],
+					"query": [
+						{
+							"key": "size",
+							"value": "300"
+						}
+					],
+					"variable": [
+						{
+							"key": "shortCode",
+							"value": "aB72x"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search & Filter URLs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/urls?query=example&status=ACTIVE",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"urls"
+					],
+					"query": [
+						{
+							"key": "query",
+							"value": "example"
+						},
+						{
+							"key": "status",
+							"value": "ACTIVE"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

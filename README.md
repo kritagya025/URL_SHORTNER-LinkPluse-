@@ -11,7 +11,7 @@
 
 LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Real-Time Analytics Platform** built using **Spring Boot 3**, **Java 17**, **PostgreSQL 16**, **Docker Compose**, **Nginx**, and an automated **GitHub Actions CI/CD Pipeline**.
 
-**Current release:** `1.5.0` — see [CHANGELOG.md](CHANGELOG.md) for the full history.
+**Current release:** `1.6.0` — see [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ---
 
@@ -38,16 +38,19 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 
 - **Random Base62 Short-Code Generation**: Generates a random 6-character short code from the Base62 character set (a-z, A-Z, 0-9) using `SecureRandom` — roughly 56.8 billion (62^6) combinations — re-rolling up to five times if the candidate code already exists (e.g. `http://localhost/aB72x`).
 - **Custom Short Code Aliases**: Supports optional, user-defined custom short codes (3–10 alphanumeric characters) with duplicate collision prevention (`409 Conflict`) and system routing reservation protection.
+- **QR Code Generation & PNG Export**: Built-in `GET /api/urls/{shortCode}/qr` endpoint powered by ZXing, generating high-resolution PNG QR codes (64–1024px) for instant sharing, accompanied by an interactive modal in the frontend dashboard for live preview and one-click PNG downloads.
+- **Search & Lifecycle Status Filtering**: Filter links on both backend and frontend by keyword query (`?query=...`) and status (`?status=ALL|ACTIVE|EXPIRED`), backed by real-time client debouncing and server-side filtering.
 - **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time. Click counts are incremented with a single atomic `UPDATE`, so simultaneous visits to the same link cannot overwrite one another.
 - **Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards every 3 seconds, without page refreshes. Polling pauses while the browser tab is in the background.
-- **Platform Analytics Summary API**: Dedicated `GET /api/urls/analytics/summary` endpoint providing cumulative links, total clicks, active vs expired counts, average clicks, and top-performing link metrics.
+- **Platform Analytics Summary API**: Dedicated `GET /api/urls/analytics/summary` endpoint providing cumulative links, total clicks, active vs expired counts, average clicks, and top-performing link metrics, rendered live in the dashboard toolbar.
+- **OWASP Security Response Headers**: Global `SecurityHeadersFilter` enforces standard defense headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`).
 - **Operational Health Check**: Built-in `/api/health` monitoring probe returns service status and database connectivity for Docker, container orchestration, and uptime monitors.
 - **Expiration Management & Bulk Purging**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`, and all expired records can be purged in bulk via `DELETE /api/urls/expired` or via the interactive dashboard.
 - **Dual-Theme Analytics Dashboard**: Light and dark themes with a persisted toggle and a `prefers-color-scheme` default, sortable columns, per-row click bars, relative timestamps, real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), a backend reachability indicator, and link deletion behind an accessible confirmation dialog. Fully responsive, collapsing into stacked cards below 760px.
 - **Keyboard & Accessibility Support**: `/` focuses the dashboard filter and `Esc` closes the dialog or clears the filter; sort headers are keyboard-operable with `aria-sort` indicators, focus rings are visible throughout, and a `prefers-reduced-motion` guard disables animations.
 - **Input Validation & Error Handling**: Spring Bean Validation enforces URL formats, while `@ControllerAdvice` standardizes JSON error responses. Unmatched paths return `404`, and unexpected failures return a generic message — internal exception text (SQL, driver and path detail) is logged, never returned.
 - **Ultra-Lean Multi-Stage Docker Architecture**: Uses `jlink` to build a custom 20-module minimal JRE on Alpine 3.21, shrinking image size from 434MB to **197MB** (55% reduction).
-- **Comprehensive Unit & Integration Test Suite**: 75 JUnit 5 tests achieving **98% instruction coverage** and **98% line coverage** via JaCoCo.
+- **Comprehensive Unit & Integration Test Suite**: 94 JUnit 5 tests achieving **98% instruction coverage** and **98% line coverage** via JaCoCo.
 - **Automated CI/CD Pipeline**: GitHub Actions workflow compiles the code, runs JUnit 5 tests with JaCoCo reports against a throwaway PostgreSQL service container, validates frontend assets, and builds and publishes Docker images.
 
 ---
@@ -200,7 +203,8 @@ Hibernate runs with `spring.jpa.hibernate.ddl-auto=update`, so the `urls` table 
 | **POST** | `/api/urls` | Create short URL | `{ originalUrl, expiresAt?, customAlias? }` | `201 Created` / `409 Conflict` |
 | **GET** | `/{shortCode}` | Redirect to original URL | None | `302 Found` |
 | **GET** | `/api/urls/{shortCode}/stats` | Get link statistics | None | `200 OK` |
-| **GET** | `/api/urls` | List all created URLs (newest first) | None | `200 OK` |
+| **GET** | `/api/urls/{shortCode}/qr` | Generate PNG QR code image (`?size=300`) | None | `200 OK` (`image/png`) |
+| **GET** | `/api/urls` | List/search created URLs (`?query=&status=`) | None | `200 OK` |
 | **GET** | `/api/urls/analytics/summary` | Aggregate platform metrics and link stats | None | `200 OK` |
 | **DELETE**| `/api/urls/expired` | Purge all expired short URLs | None | `200 OK` |
 | **DELETE**| `/api/urls/{shortCode}` | Delete short URL | None | `204 No Content` |
@@ -389,7 +393,7 @@ Import `URL_Shortener.postman_collection.json` into Postman to test pre-configur
 ├── src/main/resources/
 │   ├── application.properties
 │   └── static/           # Dashboard served by the backend (mirrors frontend/)
-├── src/test/java/        # 60 JUnit 5 + MockMvc tests
+├── src/test/java/        # 94 JUnit 5 + MockMvc tests
 ├── frontend/             # Nginx-served dashboard (index.html, css/, js/)
 ├── docs/                 # System architecture, API reference, and deployment guide
 ├── .github/workflows/    # CI/CD pipeline

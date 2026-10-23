@@ -4,6 +4,17 @@ All notable changes to the LinkPulse project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-10-23
+
+### Added
+- **QR Code Generation API**: Introduced `GET /api/urls/{shortCode}/qr` endpoint returning high-resolution PNG QR codes (using ZXing) encoding shortened links, with configurable dimension sizing (`?size=300`) clamped between 64 and 1024 pixels.
+- **Frontend QR Code Modal & Actions**: Added interactive QR preview modal dialog across both `frontend/` and embedded templates, featuring direct PNG download, link copying, keyboard focus management, and quick-access QR buttons across table rows, creation confirmation, and the inspector drawer.
+- **API Search & Status Filtering**: Added optional `?query=...` (matching short codes or target destinations) and `?status=ALL|ACTIVE|EXPIRED` parameters to `GET /api/urls`.
+- **OWASP Security Response Headers**: Implemented `SecurityHeadersFilter` enforcing `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy` to safeguard against clickjacking, MIME sniffing, and cross-origin leaks.
+- **Backend Analytics Overview Integration**: Re-architected dashboard polling to consume `/api/urls/analytics/summary` concurrently with link listings, ensuring immediate consistency across link metrics and purge controls.
+- **Comprehensive Test Suite**: Added dedicated test suites for QR code generation, query/status filtering, and security headers, expanding the automated test suite to 94 passing tests with 0 failures.
+- **Updated API Specs & Postman Collection**: Documented new QR and filter endpoints in `docs/API.md` and added test request templates to `URL_Shortener.postman_collection.json`.
+
 ## [1.5.0] - 2026-10-22
 
 ### Added

@@ -80,15 +80,45 @@ GET /api/urls/{shortCode}/stats
 
 ---
 
-## List All URLs
+## List & Search URLs
 
 ```http
 GET /api/urls
+GET /api/urls?query={searchTerm}&status={ALL|ACTIVE|EXPIRED}
 ```
+
+### Query Parameters
+
+| Parameter | Type     | Required | Description                                                         |
+| :-------- | :------- | :------- | :------------------------------------------------------------------ |
+| `query`   | `string` | No       | Case-insensitive filter matching short code or destination URL      |
+| `status`  | `string` | No       | Lifecycle status filter: `ALL` (default), `ACTIVE`, or `EXPIRED`    |
 
 ### Response (200 OK)
 
-Returns an array of all created URL objects.
+Returns an array of matching URL objects sorted by creation date descending.
+
+---
+
+## Generate QR Code
+
+```http
+GET /api/urls/{shortCode}/qr
+GET /api/urls/{shortCode}/qr?size=300
+```
+
+Generates a PNG image of a square QR code encoding the complete shortened link URL.
+
+### Query Parameters
+
+| Parameter | Type      | Required | Default | Description                                                     |
+| :-------- | :-------- | :------- | :------ | :-------------------------------------------------------------- |
+| `size`    | `integer` | No       | `300`   | Dimension in pixels (width and height clamped between 64–1024)  |
+
+### Response
+- **200 OK** (`image/png`) — Binary PNG QR code image data.
+- **404 Not Found** — Short code does not exist.
+- **410 Gone** — The short link has expired.
 
 ---
 
