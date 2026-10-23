@@ -642,5 +642,41 @@ class UrlServiceTest {
                 () -> urlService.getAllUrls(null, "UNKNOWN_STATUS"));
         assertTrue(ex.getMessage().contains("Invalid status filter"));
     }
+
+    @Test
+    @DisplayName("Get QR Code - Clamps upper bound size to 1024")
+    void getQrCodeForShortCode_ClampsUpperBoundSize() {
+        Url url = Url.builder()
+                .id(1L)
+                .shortCode("clampMax")
+                .originalUrl("https://example.com")
+                .createdAt(LocalDateTime.now())
+                .build();
+        byte[] dummyPng = new byte[]{1, 2, 3};
+
+        when(urlRepository.findByShortCode("clampMax")).thenReturn(Optional.of(url));
+        when(qrCodeService.generateQrCode(anyString(), eq(1024), eq(1024))).thenReturn(dummyPng);
+
+        byte[] result = urlService.getQrCodeForShortCode("clampMax", 4096);
+        assertNotNull(result);
+        verify(qrCodeService).generateQrCode("http://localhost:8080/clampMax", 1024, 1024);
+    }
+
+    @Test
+    @DisplayName("Get All URLs - Combined query and status filter returns matching active links")
+    void getAllUrls_WithCombinedQueryAndStatus_Success() {
+        Url matchActive = Url.builder().id(1L).shortCode("spring1").originalUrl("https://spring.io/projects")
+                .createdAt(LocalDateTime.now()).expiresAt(LocalDateTime.now().plusDays(2)).build();
+        Url matchExpired = Url.builder().id(2L).shortCode("spring2").originalUrl("https://spring.io/docs")
+                .createdAt(LocalDateTime.now().minusDays(3)).expiresAt(LocalDateTime.now().minusDays(1)).build();
+        Url otherActive = Url.builder().id(3L).shortCode("react3").originalUrl("https://react.dev")
+                .createdAt(LocalDateTime.now()).expiresAt(LocalDateTime.now().plusDays(2)).build();
+
+        when(urlRepository.findAll()).thenReturn(List.of(matchActive, matchExpired, otherActive));
+
+        List<UrlResponse> results = urlService.getAllUrls("spring", "ACTIVE");
+        assertEquals(1, results.size());
+        assertEquals("spring1", results.get(0).getShortCode());
+    }
 }
 

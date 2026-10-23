@@ -7,6 +7,7 @@ import com.urlshortener.dto.UrlStatsResponse;
 import com.urlshortener.dto.UrlSummaryResponse;
 import com.urlshortener.exception.CustomAliasAlreadyExistsException;
 import com.urlshortener.exception.ExpiredUrlException;
+import com.urlshortener.exception.InvalidUrlException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
 import com.urlshortener.service.UrlService;
 import org.junit.jupiter.api.DisplayName;
@@ -369,6 +370,30 @@ class UrlControllerTest {
         mockMvc.perform(get("/api/urls/notfound/qr"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("GET /api/urls/{shortCode}/qr - Expired short link returns 410 Gone")
+    void getQrCode_Expired_Returns410() throws Exception {
+        when(urlService.getQrCodeForShortCode("exp123", 300))
+                .thenThrow(new ExpiredUrlException("Short URL code 'exp123' has expired"));
+
+        mockMvc.perform(get("/api/urls/exp123/qr"))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.status").value(410))
+                .andExpect(jsonPath("$.message").value("Short URL code 'exp123' has expired"));
+    }
+
+    @Test
+    @DisplayName("GET /api/urls - Invalid status filter returns 400 Bad Request")
+    void getAllUrls_InvalidStatus_Returns400() throws Exception {
+        when(urlService.getAllUrls(null, "INVALID"))
+                .thenThrow(new InvalidUrlException("Invalid status filter: INVALID. Allowed values: ALL, ACTIVE, EXPIRED"));
+
+        mockMvc.perform(get("/api/urls").param("status", "INVALID"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Invalid status filter: INVALID. Allowed values: ALL, ACTIVE, EXPIRED"));
     }
 }
 

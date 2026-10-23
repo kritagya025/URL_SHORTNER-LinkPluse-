@@ -22,4 +22,20 @@ class QrCodeServiceTest {
         assertEquals((byte) 0x4E, qrBytes[2]);
         assertEquals((byte) 0x47, qrBytes[3]);
     }
+
+    @Test
+    @DisplayName("Generate QR code with 64x64 small dimensions succeeds")
+    void generateQrCode_SmallDimensions_Success() {
+        byte[] qrBytes = qrCodeService.generateQrCode("https://example.com/tiny", 64, 64);
+        assertNotNull(qrBytes);
+        assertTrue(qrBytes.length > 0);
+    }
+
+    @Test
+    @DisplayName("Generate QR code with 512x512 large dimensions succeeds")
+    void generateQrCode_LargeDimensions_Success() {
+        byte[] qrBytes = qrCodeService.generateQrCode("https://example.com/hd", 512, 512);
+        assertNotNull(qrBytes);
+        assertTrue(qrBytes.length > 0);
+    }
 }
