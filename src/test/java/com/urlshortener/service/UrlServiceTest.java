@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -598,6 +599,48 @@ class UrlServiceTest {
 
         assertThrows(ExpiredUrlException.class,
                 () -> urlService.getQrCodeForShortCode("exp123", 300));
+    }
+
+    @Test
+    @DisplayName("Get All URLs - Filter by query matches originalUrl or shortCode case-insensitively")
+    void getAllUrls_WithQueryFilter_Success() {
+        Url u1 = Url.builder().id(1L).shortCode("github1").originalUrl("https://github.com/spring-projects").createdAt(LocalDateTime.now()).build();
+        Url u2 = Url.builder().id(2L).shortCode("docker2").originalUrl("https://hub.docker.com/r/library").createdAt(LocalDateTime.now().minusMinutes(1)).build();
+        when(urlRepository.findAll()).thenReturn(List.of(u1, u2));
+
+        List<UrlResponse> resultsCode = urlService.getAllUrls("github", "ALL");
+        assertEquals(1, resultsCode.size());
+        assertEquals("github1", resultsCode.get(0).getShortCode());
+
+        List<UrlResponse> resultsUrl = urlService.getAllUrls("DOCKER", "ALL");
+        assertEquals(1, resultsUrl.size());
+        assertEquals("docker2", resultsUrl.get(0).getShortCode());
+    }
+
+    @Test
+    @DisplayName("Get All URLs - Filter by status returns only active or expired links")
+    void getAllUrls_WithStatusFilter_Success() {
+        Url activeUrl = Url.builder().id(1L).shortCode("act1").originalUrl("https://example.com/act")
+                .createdAt(LocalDateTime.now()).expiresAt(LocalDateTime.now().plusDays(1)).build();
+        Url expiredUrl = Url.builder().id(2L).shortCode("exp1").originalUrl("https://example.com/exp")
+                .createdAt(LocalDateTime.now().minusDays(2)).expiresAt(LocalDateTime.now().minusDays(1)).build();
+        when(urlRepository.findAll()).thenReturn(List.of(activeUrl, expiredUrl));
+
+        List<UrlResponse> activeResults = urlService.getAllUrls(null, "ACTIVE");
+        assertEquals(1, activeResults.size());
+        assertEquals("act1", activeResults.get(0).getShortCode());
+
+        List<UrlResponse> expiredResults = urlService.getAllUrls(null, "EXPIRED");
+        assertEquals(1, expiredResults.size());
+        assertEquals("exp1", expiredResults.get(0).getShortCode());
+    }
+
+    @Test
+    @DisplayName("Get All URLs - Invalid status filter throws InvalidUrlException")
+    void getAllUrls_InvalidStatus_ThrowsException() {
+        InvalidUrlException ex = assertThrows(InvalidUrlException.class,
+                () -> urlService.getAllUrls(null, "UNKNOWN_STATUS"));
+        assertTrue(ex.getMessage().contains("Invalid status filter"));
     }
 }
 

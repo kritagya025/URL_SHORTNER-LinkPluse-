@@ -197,12 +197,31 @@ class UrlControllerTest {
                 .shortUrl("http://localhost:8080/abc11").clickCount(5L)
                 .createdAt(LocalDateTime.now()).build();
 
-        when(urlService.getAllUrls()).thenReturn(java.util.List.of(url1));
+        when(urlService.getAllUrls(null, null)).thenReturn(java.util.List.of(url1));
 
         mockMvc.perform(get("/api/urls"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].shortCode").value("abc11"))
                 .andExpect(jsonPath("$[0].clickCount").value(5));
+    }
+
+    @Test
+    @DisplayName("GET /api/urls - Passes query and status query parameters to service")
+    void getAllUrls_WithFilterParams_Success() throws Exception {
+        UrlResponse url1 = UrlResponse.builder()
+                .id(1L).originalUrl("https://spring.io").shortCode("spr1")
+                .shortUrl("http://localhost:8080/spr1").clickCount(2L)
+                .createdAt(LocalDateTime.now()).build();
+
+        when(urlService.getAllUrls("spring", "ACTIVE")).thenReturn(java.util.List.of(url1));
+
+        mockMvc.perform(get("/api/urls")
+                        .param("query", "spring")
+                        .param("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].shortCode").value("spr1"));
+
+        verify(urlService).getAllUrls("spring", "ACTIVE");
     }
 
     @Test

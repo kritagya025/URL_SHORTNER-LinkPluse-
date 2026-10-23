@@ -42,13 +42,17 @@ public class UrlController {
     }
 
     /**
-     * Retrieves all created URL mappings.
+     * Retrieves all created URL mappings with optional search and lifecycle status filtering.
      *
-     * @return List of all UrlResponse items
+     * @param query  Optional search keyword matching short code or destination URL
+     * @param status Optional status filter: ALL (default), ACTIVE, or EXPIRED
+     * @return List of matching UrlResponse items
      */
     @GetMapping
-    public ResponseEntity<List<UrlResponse>> getAllUrls() {
-        List<UrlResponse> urls = urlService.getAllUrls();
+    public ResponseEntity<List<UrlResponse>> getAllUrls(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status) {
+        List<UrlResponse> urls = urlService.getAllUrls(query, status);
         return ResponseEntity.ok(urls);
     }
 

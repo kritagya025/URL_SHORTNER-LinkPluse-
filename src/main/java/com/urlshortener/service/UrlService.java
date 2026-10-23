@@ -129,8 +129,36 @@ public class UrlService {
 
     @Transactional(readOnly = true)
     public List<UrlResponse> getAllUrls() {
+        return getAllUrls(null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UrlResponse> getAllUrls(String query, String status) {
+        LocalDateTime now = LocalDateTime.now();
+        String normalizedQuery = (query != null && !query.trim().isEmpty()) ? query.trim().toLowerCase() : null;
+        String normalizedStatus = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : "ALL";
+
+        if (!Set.of("ALL", "ACTIVE", "EXPIRED").contains(normalizedStatus)) {
+            throw new InvalidUrlException("Invalid status filter: " + status + ". Allowed values: ALL, ACTIVE, EXPIRED");
+        }
+
         return urlRepository.findAll().stream()
                 .sorted((u1, u2) -> u2.getCreatedAt().compareTo(u1.getCreatedAt()))
+                .filter(url -> {
+                    if (normalizedQuery == null) return true;
+                    boolean matchesShortCode = url.getShortCode() != null && url.getShortCode().toLowerCase().contains(normalizedQuery);
+                    boolean matchesOriginalUrl = url.getOriginalUrl() != null && url.getOriginalUrl().toLowerCase().contains(normalizedQuery);
+                    return matchesShortCode || matchesOriginalUrl;
+                })
+                .filter(url -> {
+                    boolean isExp = url.getExpiresAt() != null && now.isAfter(url.getExpiresAt());
+                    if ("ACTIVE".equals(normalizedStatus)) {
+                        return !isExp;
+                    } else if ("EXPIRED".equals(normalizedStatus)) {
+                        return isExp;
+                    }
+                    return true;
+                })
                 .map(this::mapToUrlResponse)
                 .collect(Collectors.toList());
     }
