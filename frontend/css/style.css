@@ -2359,6 +2359,55 @@ body.details-docked .scroll-top-btn {
     }
 }
 
+/* --------------------------------------------------------------------------
+   QR Code Modal
+   -------------------------------------------------------------------------- */
+.qr-modal {
+    width: min(380px, 100%);
+    text-align: center;
+    gap: var(--sp-4);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.qr-preview-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 auto;
+    width: fit-content;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.qr-preview-wrapper img {
+    display: block;
+    image-rendering: pixelated;
+    max-width: 100%;
+    height: auto;
+}
+
+.qr-url-text {
+    font-size: var(--fs-13);
+    color: var(--text-2);
+    word-break: break-all;
+    margin: 0;
+}
+
+.details-qr-action .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;

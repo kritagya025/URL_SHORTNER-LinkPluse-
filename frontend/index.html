@@ -203,6 +203,7 @@
                     <button type="button" id="copy-btn" class="btn btn-secondary btn-sm">
                         <span class="btn-label">Copy</span>
                     </button>
+                    <button type="button" id="result-qr-btn" class="btn btn-secondary btn-sm">QR Code</button>
                     <button type="button" id="inspect-result-btn" class="btn btn-secondary btn-sm">Details</button>
                     <button type="button" id="result-dismiss" class="icon-btn icon-btn-sm"
                         aria-label="Dismiss created link">
@@ -496,6 +497,19 @@
                             </div>
                         </dl>
 
+                        <div class="details-qr-action" style="margin-top: var(--sp-3); margin-bottom: var(--sp-2);">
+                            <button type="button" id="details-qr-btn" class="btn btn-secondary btn-block btn-sm">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                <span class="btn-label">View QR Code</span>
+                            </button>
+                        </div>
+
                         <div class="details-danger">
                             <button type="button" id="details-delete" class="btn btn-danger-subtle btn-block">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -552,6 +566,39 @@
                     <span class="spinner hidden" aria-hidden="true"></span>
                     <span class="btn-text">Delete</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR code modal dialog -->
+    <div id="qr-modal" class="modal-overlay hidden" data-keep-interactive>
+        <div class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+            <div class="modal-header">
+                <h2 id="qr-modal-title">Link QR Code</h2>
+                <button type="button" id="qr-modal-close" class="icon-btn" aria-label="Close QR code modal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-preview-wrapper" id="qr-preview-wrapper">
+                    <img id="qr-image" src="" alt="Short URL QR Code" width="200" height="200">
+                </div>
+                <p id="qr-short-url" class="qr-url-text mono"></p>
+                <div class="modal-actions">
+                    <a id="qr-download-btn" class="btn btn-primary" href="#" download="qrcode.png">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
+                        </svg>
+                        <span class="btn-label">Download PNG</span>
+                    </a>
+                    <button type="button" id="qr-copy-btn" class="btn btn-secondary">
+                        <span class="btn-label">Copy Link</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

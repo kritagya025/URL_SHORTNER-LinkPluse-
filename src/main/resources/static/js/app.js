@@ -345,9 +345,74 @@ urlTableBody.addEventListener('click', (e) => {
 
     const { action, code, url } = btn.dataset;
     if (action === 'copy') copyToClipboard(url, btn);
+    else if (action === 'qr') showQrModal(code, url, btn);
     else if (action === 'stats') inspectStats(code, btn);
     else if (action === 'delete') requestDelete(code, btn);
 });
+
+// QR Code Modal handling
+let qrModalTrigger = null;
+
+function showQrModal(shortCode, shortUrl, trigger) {
+    qrModalTrigger = trigger || document.activeElement;
+    const img = document.getElementById('qr-image');
+    const qrUrlText = document.getElementById('qr-short-url');
+    const downloadBtn = document.getElementById('qr-download-btn');
+    const copyLinkBtn = document.getElementById('qr-copy-btn');
+    const qrModal = document.getElementById('qr-modal');
+
+    const qrEndpoint = `${API_BASE_URL}/api/urls/${encodeURIComponent(shortCode)}/qr?size=300`;
+    img.src = qrEndpoint;
+    const fullUrl = shortUrl || `${API_BASE_URL}/${shortCode}`;
+    qrUrlText.textContent = fullUrl;
+    downloadBtn.href = qrEndpoint;
+    downloadBtn.download = `${shortCode}-qr.png`;
+
+    copyLinkBtn.onclick = () => copyToClipboard(fullUrl, copyLinkBtn);
+
+    qrModal.classList.remove('hidden');
+    isolateBackground(qrModal, 'modal');
+    const closeBtn = document.getElementById('qr-modal-close');
+    if (closeBtn) closeBtn.focus();
+}
+
+function closeQrModal() {
+    const qrModal = document.getElementById('qr-modal');
+    if (!qrModal || qrModal.classList.contains('hidden')) return;
+    qrModal.classList.add('hidden');
+    releaseBackground('modal');
+    if (qrModalTrigger && qrModalTrigger.isConnected) {
+        qrModalTrigger.focus({ preventScroll: true });
+    }
+}
+
+const qrModalCloseBtn = document.getElementById('qr-modal-close');
+if (qrModalCloseBtn) qrModalCloseBtn.addEventListener('click', closeQrModal);
+
+const qrModalEl = document.getElementById('qr-modal');
+if (qrModalEl) {
+    qrModalEl.addEventListener('click', (e) => {
+        if (e.target.id === 'qr-modal') closeQrModal();
+    });
+}
+
+const resultQrBtn = document.getElementById('result-qr-btn');
+if (resultQrBtn) {
+    resultQrBtn.addEventListener('click', () => {
+        if (lastCreatedCode) {
+            showQrModal(lastCreatedCode, resultShortUrl.href, resultQrBtn);
+        }
+    });
+}
+
+const detailsQrBtn = document.getElementById('details-qr-btn');
+if (detailsQrBtn) {
+    detailsQrBtn.addEventListener('click', () => {
+        if (detailsCode) {
+            showQrModal(detailsCode, statShortUrl.href, detailsQrBtn);
+        }
+    });
+}
 
 // Details panel
 detailsClose.addEventListener('click', () => closeDetails());
@@ -375,7 +440,10 @@ document.addEventListener('keydown', (e) => {
         tableSearch.focus();
         tableSearch.select();
     } else if (e.key === 'Escape') {
-        if (!confirmModal.classList.contains('hidden')) {
+        const qrModal = document.getElementById('qr-modal');
+        if (qrModal && !qrModal.classList.contains('hidden')) {
+            closeQrModal();
+        } else if (!confirmModal.classList.contains('hidden')) {
             if (!isDeleting) closeConfirm();
         } else if (!expiryPanel.hidden) {
             closeExpiryPanel(true);
@@ -1025,6 +1093,16 @@ function updateRow(tr, url, maxClicks) {
                 <svg class="i-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="m20 6-11 11-5-5"></path>
+                </svg>
+            </button>
+            <button type="button" class="row-action" data-action="qr" data-code="${code}" data-url="${escapeHtml(url.shortUrl)}"
+                    title="QR code" aria-label="Show QR code for ${code}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
                 </svg>
             </button>
             <button type="button" class="row-action" data-action="stats" data-code="${code}"
