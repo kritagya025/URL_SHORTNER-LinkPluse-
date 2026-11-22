@@ -4,18 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkPulse — URL Shortener</title>
+    <title>LinkPulse: URL Shortener</title>
     <meta name="description"
         content="Shorten URLs, set expirations and watch click counts update live. Built with Spring Boot and PostgreSQL.">
     <meta name="theme-color" content="#F7F8FA">
     <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M22 12h-4l-3 9L9 3l-3 9H2'/></svg>">
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 17H7A5 5 0 0 1 7 7h2'/><path d='M15 7h2a5 5 0 0 1 4 8'/><path d='M8 12h2.5l1.5-3 2 6 1.5-3H16'/></svg>">
 
-    <!-- Google Fonts: Inter (UI) + JetBrains Mono (codes & links) -->
+    <!-- Google Fonts: Plus Jakarta Sans (UI) + JetBrains Mono (codes & links) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 
@@ -46,9 +46,11 @@
             <div class="header-left">
                 <span class="brand">
                     <svg class="brand-mark" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
                         aria-hidden="true">
-                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        <path d="M9 17H7A5 5 0 0 1 7 7h2"></path>
+                        <path d="M15 7h2a5 5 0 0 1 4 8"></path>
+                        <path d="M8 12h2.5l1.5-3 2 6 1.5-3H16"></path>
                     </svg>
                     <span class="brand-name">LinkPulse</span>
                 </span>
@@ -128,7 +130,7 @@
                         <span class="create-alias-prefix" aria-hidden="true">/</span>
                         <input type="text" id="custom-alias" name="customAlias" maxlength="10"
                             placeholder="alias (opt)" autocomplete="off" autocapitalize="off" spellcheck="false"
-                            title="Optional custom alias (3–10 alphanumeric characters)">
+                            title="Optional custom alias (3-10 alphanumeric characters)">
                     </div>
 
                     <span class="create-sep" aria-hidden="true"></span>
@@ -174,11 +176,6 @@
                     <button type="submit" id="shorten-btn" class="btn btn-primary shorten-btn">
                         <span class="btn-text">Shorten</span>
                         <span class="spinner hidden" aria-hidden="true"></span>
-                        <svg class="btn-arrow" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            aria-hidden="true">
-                            <path d="M5 12h14M13 6l6 6-6 6"></path>
-                        </svg>
                     </button>
                 </div>
 
@@ -274,10 +271,10 @@
                                 <option value="clickCount:asc">Fewest clicks</option>
                                 <option value="expiresAt:asc">Expiring soonest</option>
                                 <option value="expiresAt:desc">Expiring latest</option>
-                                <option value="shortCode:asc">Short code A–Z</option>
-                                <option value="shortCode:desc">Short code Z–A</option>
-                                <option value="originalUrl:asc">Destination A–Z</option>
-                                <option value="originalUrl:desc">Destination Z–A</option>
+                                <option value="shortCode:asc">Short code A-Z</option>
+                                <option value="shortCode:desc">Short code Z-A</option>
+                                <option value="originalUrl:asc">Destination A-Z</option>
+                                <option value="originalUrl:desc">Destination Z-A</option>
                             </select>
                         </div>
 
@@ -383,16 +380,21 @@
                     <!-- No links / no matches -->
                     <div id="table-empty" class="table-state hidden">
                         <h3 id="empty-title">No links yet</h3>
-                        <p id="empty-text">Paste a long URL above to create your first short link.</p>
-                        <button type="button" id="empty-action" class="btn btn-secondary btn-sm hidden">Clear
-                            filters</button>
+                        <p id="empty-text">Paste a long URL above to create your first short link, or explore sample links.</p>
+                        <div class="empty-state-actions">
+                            <button type="button" id="demo-action" class="btn btn-secondary btn-sm">Try demo links</button>
+                            <button type="button" id="empty-action" class="btn btn-secondary btn-sm hidden">Clear filters</button>
+                        </div>
                     </div>
 
                     <!-- First load failed -->
                     <div id="table-error" class="table-state hidden">
                         <h3>Can't reach the server</h3>
                         <p>Links will appear as soon as the LinkPulse API responds. Retrying every 3 seconds.</p>
-                        <button type="button" class="btn btn-secondary btn-sm" data-retry>Retry now</button>
+                        <div class="empty-state-actions">
+                            <button type="button" class="btn btn-secondary btn-sm" data-retry>Retry now</button>
+                            <button type="button" id="error-demo-btn" class="btn btn-secondary btn-sm">Try demo links</button>
+                        </div>
                     </div>
 
                     <div class="table-foot">
@@ -419,9 +421,28 @@
                 </div>
 
                 <div class="details-body">
-                    <div id="details-loading" class="details-state" role="status">
-                        <span class="spinner spinner-muted" aria-hidden="true"></span>
-                        <span id="details-loading-text">Loading link…</span>
+                    <div id="details-loading" class="details-state details-state-skeleton" role="status">
+                        <span class="visually-hidden" id="details-loading-text">Loading link details…</span>
+                        <div class="details-skeleton" aria-hidden="true">
+                            <div class="details-skeleton-field">
+                                <div class="skeleton-bar skeleton-bar-label"></div>
+                                <div class="skeleton-bar skeleton-bar-code"></div>
+                            </div>
+                            <div class="details-skeleton-field">
+                                <div class="skeleton-bar skeleton-bar-label"></div>
+                                <div class="skeleton-bar skeleton-bar-url"></div>
+                            </div>
+                            <div class="details-skeleton-grid">
+                                <div class="skeleton-card"></div>
+                                <div class="skeleton-card"></div>
+                                <div class="skeleton-card"></div>
+                                <div class="skeleton-card"></div>
+                            </div>
+                            <div class="details-skeleton-meta">
+                                <div class="skeleton-bar skeleton-bar-row"></div>
+                                <div class="skeleton-bar skeleton-bar-row"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="details-error" class="details-state details-state-error hidden">
@@ -532,10 +553,15 @@
     <footer class="site-footer" id="site-footer">
         <div class="container footer-inner">
             <span class="mono">LinkPulse v1.6.0</span>
-            <span class="footer-meta">
-                <span class="mono" id="api-latency">API —</span>
+            <div class="footer-links">
+                <button type="button" id="terms-btn" class="footer-link">Terms of Service</button>
                 <span class="summary-sep" aria-hidden="true">·</span>
-                <a href="https://github.com/kritagya025/URL_SHORTNER-LinkPluse-" target="_blank" rel="noopener">Source</a>
+                <button type="button" id="privacy-btn" class="footer-link">Privacy Policy</button>
+                <span class="summary-sep" aria-hidden="true">·</span>
+                <a href="https://github.com/kritagya025/URL_SHORTNER-LinkPluse-" target="_blank" rel="noopener" class="footer-link">Source</a>
+            </div>
+            <span class="footer-meta">
+                <span class="mono" id="api-latency">API: --</span>
             </span>
         </div>
     </footer>
@@ -599,6 +625,68 @@
                         <span class="btn-label">Copy Link</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service modal dialog -->
+    <div id="terms-modal" class="modal-overlay hidden" data-keep-interactive>
+        <div class="modal legal-modal" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+            <div class="modal-header">
+                <h2 id="terms-modal-title">Terms of Service</h2>
+                <button type="button" id="terms-modal-close" class="icon-btn" aria-label="Close Terms of Service">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="legal-modal-body">
+                <h3>1. Acceptable Use</h3>
+                <p>LinkPulse is built for creating fast, readable short links to legitimate web resources. Creating links to phishing campaigns, malware distributions, credential harvesters, illegal content, or unsolicited bulk spam is strictly prohibited and results in immediate link termination without notice.</p>
+                
+                <h3>2. Service Availability &amp; Expirations</h3>
+                <p>LinkPulse provides URL shortening on an as-is basis. You may set optional custom expirations (from 1 hour to custom dates). Once a link passes its expiration date, it returns an HTTP 410 Gone status code and stops redirecting traffic.</p>
+                
+                <h3>3. Rate Limits &amp; Automated Traffic</h3>
+                <p>To preserve high availability and sub-millisecond redirect lookups for all users, programmatic API access is subject to sensible rate limits. Excessively high automated bursts may receive HTTP 429 Too Many Requests responses.</p>
+
+                <h3>4. Data Integrity &amp; Deletion</h3>
+                <p>You can delete your short links at any time via the dashboard. Once deleted, the alias becomes inaccessible immediately.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="terms-close-btn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy modal dialog -->
+    <div id="privacy-modal" class="modal-overlay hidden" data-keep-interactive>
+        <div class="modal legal-modal" role="dialog" aria-modal="true" aria-labelledby="privacy-modal-title">
+            <div class="modal-header">
+                <h2 id="privacy-modal-title">Privacy Policy</h2>
+                <button type="button" id="privacy-modal-close" class="icon-btn" aria-label="Close Privacy Policy">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="legal-modal-body">
+                <h3>1. Information We Collect</h3>
+                <p>LinkPulse respects user privacy. When you shorten a URL, we store only the destination URL, the generated short code, the creation timestamp, and any optional expiration date.</p>
+
+                <h3>2. Click Analytics &amp; Privacy</h3>
+                <p>When visitors click a shortened link, LinkPulse increments an aggregate counter. We do not track individual users across the web, do not build personal browsing profiles, and do not use third-party behavioral cookies.</p>
+
+                <h3>3. Client-Side Storage</h3>
+                <p>This web dashboard uses browser <code>localStorage</code> solely to remember your chosen color theme (light or dark mode). No personal data or tracking identifiers are placed in your browser storage.</p>
+
+                <h3>4. Open Source Transparency</h3>
+                <p>The LinkPulse application codebase is open source and verifiable on GitHub under the MIT License.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="privacy-close-btn" class="btn btn-secondary">Close</button>
             </div>
         </div>
     </div>

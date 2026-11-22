@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LinkPulse — Dashboard client
+   LinkPulse: Dashboard client
    Handles theme, short-link creation, live polling, sorting, filtering,
    the details panel and deletion.
    ========================================================================== */
@@ -143,6 +143,54 @@ const confirmAcceptText = confirmAccept.querySelector('.btn-text');
 const confirmAcceptSpinner = confirmAccept.querySelector('.spinner');
 const confirmCancel = document.getElementById('confirm-cancel');
 
+// Demo links and legal modal elements
+const demoActionBtn = document.getElementById('demo-action');
+const errorDemoBtn = document.getElementById('error-demo-btn');
+const termsBtn = document.getElementById('terms-btn');
+const privacyBtn = document.getElementById('privacy-btn');
+const termsModal = document.getElementById('terms-modal');
+const privacyModal = document.getElementById('privacy-modal');
+const termsModalClose = document.getElementById('terms-modal-close');
+const termsCloseBtn = document.getElementById('terms-close-btn');
+const privacyModalClose = document.getElementById('privacy-modal-close');
+const privacyCloseBtn = document.getElementById('privacy-close-btn');
+
+let isDemoMode = false;
+const DEMO_URLS = [
+    {
+        shortCode: 'gh-repo',
+        originalUrl: 'https://github.com/kritagya025/URL_SHORTNER-LinkPluse-',
+        shortUrl: `${window.location.origin}/gh-repo`,
+        clickCount: 142,
+        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        expiresAt: null
+    },
+    {
+        shortCode: 'api-docs',
+        originalUrl: 'https://github.com/kritagya025/URL_SHORTNER-LinkPluse-/blob/main/docs/api.md',
+        shortUrl: `${window.location.origin}/api-docs`,
+        clickCount: 89,
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        expiresAt: new Date(Date.now() + 86400000 * 7).toISOString()
+    },
+    {
+        shortCode: 'spring',
+        originalUrl: 'https://spring.io/projects/spring-boot',
+        shortUrl: `${window.location.origin}/spring`,
+        clickCount: 45,
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        expiresAt: new Date(Date.now() + 86400000 * 30).toISOString()
+    },
+    {
+        shortCode: 'expired-1',
+        originalUrl: 'https://example.com/temporary-promotional-campaign-2025',
+        shortUrl: `${window.location.origin}/expired-1`,
+        clickCount: 19,
+        createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+        expiresAt: new Date(Date.now() - 86400000 * 2).toISOString()
+    }
+];
+
 // Details dock beside the table on wide screens and overlay the page otherwise
 const dockedQuery = window.matchMedia('(min-width: 1280px)');
 
@@ -163,7 +211,7 @@ function applyTheme(theme) {
     try {
         localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch (e) {
-        /* Storage unavailable (private mode) — theme stays for this session only */
+        /* Storage unavailable (private mode) - theme stays for this session only */
     }
 }
 
@@ -228,6 +276,78 @@ refreshBtn.addEventListener('click', async () => {
 });
 
 document.querySelectorAll('[data-retry]').forEach(btn => btn.addEventListener('click', () => loadAllUrls()));
+
+// Demo mode links loader
+function loadDemoData() {
+    isDemoMode = true;
+    hasLoadedOnce = true;
+    allUrls = JSON.parse(JSON.stringify(DEMO_URLS));
+    mutationVersion++;
+    updateOverviewMetrics(allUrls);
+    renderUrlTable();
+    announce('Loaded sample demo links');
+    showToast('Loaded demo links', 'info');
+}
+
+if (demoActionBtn) demoActionBtn.addEventListener('click', loadDemoData);
+if (errorDemoBtn) errorDemoBtn.addEventListener('click', loadDemoData);
+
+// Legal modals: Terms of Service & Privacy Policy
+let legalModalTrigger = null;
+
+function openTermsModal(trigger) {
+    legalModalTrigger = trigger || document.activeElement;
+    if (termsModal) {
+        termsModal.classList.remove('hidden');
+        isolateBackground(termsModal, 'modal');
+        if (termsModalClose) termsModalClose.focus();
+    }
+}
+
+function closeTermsModal() {
+    if (!termsModal || termsModal.classList.contains('hidden')) return;
+    termsModal.classList.add('hidden');
+    releaseBackground('modal');
+    if (legalModalTrigger && legalModalTrigger.isConnected) {
+        legalModalTrigger.focus({ preventScroll: true });
+    }
+}
+
+function openPrivacyModal(trigger) {
+    legalModalTrigger = trigger || document.activeElement;
+    if (privacyModal) {
+        privacyModal.classList.remove('hidden');
+        isolateBackground(privacyModal, 'modal');
+        if (privacyModalClose) privacyModalClose.focus();
+    }
+}
+
+function closePrivacyModal() {
+    if (!privacyModal || privacyModal.classList.contains('hidden')) return;
+    privacyModal.classList.add('hidden');
+    releaseBackground('modal');
+    if (legalModalTrigger && legalModalTrigger.isConnected) {
+        legalModalTrigger.focus({ preventScroll: true });
+    }
+}
+
+if (termsBtn) termsBtn.addEventListener('click', (e) => openTermsModal(e.currentTarget));
+if (privacyBtn) privacyBtn.addEventListener('click', (e) => openPrivacyModal(e.currentTarget));
+if (termsModalClose) termsModalClose.addEventListener('click', closeTermsModal);
+if (termsCloseBtn) termsCloseBtn.addEventListener('click', closeTermsModal);
+if (privacyModalClose) privacyModalClose.addEventListener('click', closePrivacyModal);
+if (privacyCloseBtn) privacyCloseBtn.addEventListener('click', closePrivacyModal);
+
+if (termsModal) {
+    termsModal.addEventListener('click', (e) => {
+        if (e.target === termsModal) closeTermsModal();
+    });
+}
+if (privacyModal) {
+    privacyModal.addEventListener('click', (e) => {
+        if (e.target === privacyModal) closePrivacyModal();
+    });
+}
 
 // Lookup by short code (header)
 lookupForm.addEventListener('submit', (e) => {
@@ -338,7 +458,7 @@ mobileSort.addEventListener('change', () => {
     renderUrlTable();
 });
 
-// Row actions via delegation — keeps generated markup free of inline handlers
+// Row actions via delegation: keeps generated markup free of inline handlers
 urlTableBody.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -363,6 +483,10 @@ function showQrModal(shortCode, shortUrl, trigger) {
 
     const qrEndpoint = `${API_BASE_URL}/api/urls/${encodeURIComponent(shortCode)}/qr?size=300`;
     img.src = qrEndpoint;
+    img.onerror = () => {
+        // Fallback demo QR representation when backend is unreachable
+        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%2317191C"><rect width="100" height="100" fill="%23FFFFFF"/><rect x="10" y="10" width="30" height="30" fill="none" stroke="%2317191C" stroke-width="6"/><rect x="20" y="20" width="10" height="10"/><rect x="60" y="10" width="30" height="30" fill="none" stroke="%2317191C" stroke-width="6"/><rect x="70" y="20" width="10" height="10"/><rect x="10" y="60" width="30" height="30" fill="none" stroke="%2317191C" stroke-width="6"/><rect x="20" y="70" width="10" height="10"/><rect x="50" y="50" width="10" height="10"/><rect x="65" y="65" width="15" height="15"/><rect x="85" y="50" width="10" height="10"/><rect x="50" y="80" width="15" height="10"/></svg>`;
+    };
     const fullUrl = shortUrl || `${API_BASE_URL}/${shortCode}`;
     qrUrlText.textContent = fullUrl;
     downloadBtn.href = qrEndpoint;
@@ -445,6 +569,10 @@ document.addEventListener('keydown', (e) => {
             closeQrModal();
         } else if (!confirmModal.classList.contains('hidden')) {
             if (!isDeleting) closeConfirm();
+        } else if (termsModal && !termsModal.classList.contains('hidden')) {
+            closeTermsModal();
+        } else if (privacyModal && !privacyModal.classList.contains('hidden')) {
+            closePrivacyModal();
         } else if (!expiryPanel.hidden) {
             closeExpiryPanel(true);
         } else if (!details.hidden) {
@@ -689,6 +817,10 @@ function inspectStats(shortCode, trigger) {
  * @param {boolean} isSilent When true (background refresh), failures keep the last good data
  */
 async function fetchDetails(shortCode, isSilent) {
+    if (isDemoMode && DEMO_URLS.some(d => d.shortCode === shortCode)) {
+        return; // Retain cached demo values without failing with offline error
+    }
+
     if (!isSilent && !detailsHasData) showDetailsState('loading');
 
     try {
@@ -928,7 +1060,7 @@ function updateSyncStatus() {
 
     connNotice.classList.toggle('hidden', !stale);
     if (stale) {
-        connNoticeText.textContent = `Can't reach the server. Showing links as of ${formatTime(lastSyncAt)} — retrying every ${POLL_INTERVAL_MS / 1000} seconds.`;
+        connNoticeText.textContent = `Can't reach the server. Showing links as of ${formatTime(lastSyncAt)} · retrying every ${POLL_INTERVAL_MS / 1000} seconds.`;
     }
 }
 
@@ -1042,10 +1174,11 @@ function renderUrlTable() {
 function showEmptyState(query) {
     const filtered = Boolean(query) || statusFilter !== 'all';
     emptyAction.classList.toggle('hidden', !filtered);
+    if (demoActionBtn) demoActionBtn.classList.toggle('hidden', filtered || allUrls.length > 0);
 
     if (!allUrls.length) {
         emptyTitle.textContent = 'No links yet';
-        emptyText.textContent = 'Paste a long URL above to create your first short link.';
+        emptyText.textContent = 'Paste a long URL above to create your first short link, or explore sample links.';
     } else if (query) {
         emptyTitle.textContent = 'No matching links';
         const scope = statusFilter === 'all' ? '' : ` among ${statusFilter} links`;
@@ -1347,6 +1480,19 @@ confirmAccept.addEventListener('click', async () => {
     const shortCode = pendingDeleteCode;
     if (!shortCode) return;
 
+    if (isDemoMode && DEMO_URLS.some(d => d.shortCode === shortCode)) {
+        const focusTarget = focusTargetAfterDelete(shortCode);
+        closeConfirm({ restoreFocus: false });
+        if (detailsCode === shortCode) closeDetails({ restoreFocus: false });
+        mutationVersion++;
+        allUrls = allUrls.filter(u => u.shortCode !== shortCode);
+        updateOverviewMetrics(allUrls);
+        renderUrlTable();
+        showToast(`Deleted ${shortCode}`, 'success');
+        (focusTarget && focusTarget.isConnected ? focusTarget : tableSearch).focus({ preventScroll: true });
+        return;
+    }
+
     setDeleting(true);
     confirmError.textContent = '';
 
@@ -1434,7 +1580,10 @@ function releaseBackground(owner) {
 }
 
 function isOverlayOpen() {
-    return !confirmModal.classList.contains('hidden') || (!details.hidden && !dockedQuery.matches);
+    return !confirmModal.classList.contains('hidden')
+        || (termsModal && !termsModal.classList.contains('hidden'))
+        || (privacyModal && !privacyModal.classList.contains('hidden'))
+        || (!details.hidden && !dockedQuery.matches);
 }
 
 /**
