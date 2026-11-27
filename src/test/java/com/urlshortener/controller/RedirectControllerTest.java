@@ -35,7 +35,9 @@ class RedirectControllerTest {
 
         mockMvc.perform(get("/" + shortCode))
                 .andExpect(status().isFound())
-                .andExpect(header().string("Location", destination));
+                .andExpect(header().string("Location", destination))
+                .andExpect(header().string("Cache-Control", "no-store, no-cache, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
     }
 
     @Test

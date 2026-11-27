@@ -3,11 +3,15 @@ package com.urlshortener.exception;
 import com.urlshortener.dto.ErrorResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -125,5 +129,41 @@ class GlobalExceptionHandlerTest {
         assertEquals(500, response.getBody().getStatus());
         assertEquals("An unexpected error occurred", response.getBody().getMessage());
         assertFalse(response.getBody().getMessage().contains("Secret"), "Internal details must not leak");
+    }
+
+    @Test
+    @DisplayName("handleMessageNotReadable returns 400 Bad Request for malformed JSON")
+    void handleMessageNotReadable_Returns400() {
+        HttpMessageNotReadableException ex = new HttpMessageNotReadableException("JSON parse error", mock(HttpInputMessage.class));
+        ResponseEntity<ErrorResponse> response = handler.handleMessageNotReadable(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(400, response.getBody().getStatus());
+    }
+
+    @Test
+    @DisplayName("handleTypeMismatch returns 400 Bad Request with parameter name")
+    void handleTypeMismatch_Returns400() {
+        MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
+        when(ex.getName()).thenReturn("size");
+
+        ResponseEntity<ErrorResponse> response = handler.handleTypeMismatch(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(400, response.getBody().getStatus());
+        assertTrue(response.getBody().getMessage().contains("size"));
+    }
+
+    @Test
+    @DisplayName("handleMethodNotSupported returns 405 Method Not Allowed")
+    void handleMethodNotSupported_Returns405() {
+        HttpRequestMethodNotSupportedException ex = new HttpRequestMethodNotSupportedException("PUT");
+        ResponseEntity<ErrorResponse> response = handler.handleMethodNotSupported(ex);
+
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(405, response.getBody().getStatus());
     }
 }

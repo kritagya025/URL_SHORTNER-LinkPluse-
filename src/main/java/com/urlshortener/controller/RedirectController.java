@@ -35,8 +35,12 @@ public class RedirectController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create(originalUrl));
+        // Prevent browsers and proxies from caching 302 redirects so expired/deleted links
+        // stop working immediately and repeat visits continue incrementing click analytics.
+        headers.set(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate");
+        headers.set(HttpHeaders.PRAGMA, "no-cache");
 
-        // Return 302 Found (or 307 Temporary Redirect) to instruct browser to perform redirect
+        // Return 302 Found to instruct browser to perform temporary redirect
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 }

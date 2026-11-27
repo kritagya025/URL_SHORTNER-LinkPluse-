@@ -1,6 +1,7 @@
 package com.urlshortener.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,9 +21,10 @@ public class CreateUrlRequest {
 
     /**
      * The original target URL to shorten.
-     * Must not be blank.
+     * Must not be blank and cannot exceed 2048 characters.
      */
     @NotBlank(message = "Original URL cannot be empty or null")
+    @Size(max = 2048, message = "Original URL must not exceed 2048 characters")
     private String originalUrl;
 
     /**

@@ -737,5 +737,52 @@ class UrlServiceTest {
         UrlResponse response = urlService.createShortUrl(request);
         assertEquals("pub888", response.getShortCode());
     }
+
+    @Test
+    @DisplayName("Create Short URL - Rejects URLs exceeding 2048 characters")
+    void createShortUrl_ExceedsMaxLength_ThrowsInvalidUrlException() {
+        String longPath = "a".repeat(2040);
+        String overLimitUrl = "https://example.com/" + longPath; // 2060 chars > 2048
+        CreateUrlRequest request = CreateUrlRequest.builder().originalUrl(overLimitUrl).build();
+
+        InvalidUrlException ex = assertThrows(InvalidUrlException.class,
+                () -> urlService.createShortUrl(request));
+        assertTrue(ex.getMessage().contains("2048"));
+        verify(urlRepository, never()).save(any(Url.class));
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Accepts URL at exact 2048 character limit")
+    void createShortUrl_AtExactMaxLength_Success() {
+        String prefix = "https://example.com/";
+        String exactUrl = prefix + "a".repeat(UrlService.MAX_URL_LENGTH - prefix.length());
+        assertEquals(2048, exactUrl.length());
+
+        CreateUrlRequest request = CreateUrlRequest.builder().originalUrl(exactUrl).build();
+        when(shortCodeGenerator.generateShortCode()).thenReturn("max204");
+        when(urlRepository.existsByShortCode("max204")).thenReturn(false);
+
+        Url savedEntity = Url.builder()
+                .id(11L)
+                .originalUrl(exactUrl)
+                .shortCode("max204")
+                .clickCount(0L)
+                .createdAt(LocalDateTime.now())
+                .build();
+        when(urlRepository.save(any(Url.class))).thenReturn(savedEntity);
+
+        UrlResponse response = urlService.createShortUrl(request);
+        assertEquals("max204", response.getShortCode());
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Rejects invalid port above 65535")
+    void createShortUrl_InvalidPort_ThrowsInvalidUrlException() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://example.com:70000/test")
+                .build();
+
+        assertThrows(InvalidUrlException.class, () -> urlService.createShortUrl(request));
+    }
 }
 

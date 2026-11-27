@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UrlService {
 
+    public static final int MAX_URL_LENGTH = 2048;
+
     private static final Set<String> RESERVED_WORDS = Set.of(
             "api", "health", "css", "js", "static", "assets", "favicon.ico", "robots.txt", "sitemap.xml", "index.html", "admin", "docs", "swagger-ui", "expired"
     );
@@ -222,6 +224,10 @@ public class UrlService {
     }
 
     private void validateUrlFormat(String urlString) {
+        if (urlString.length() > MAX_URL_LENGTH) {
+            throw new InvalidUrlException("Original URL must not exceed " + MAX_URL_LENGTH + " characters");
+        }
+
         URI uri;
         try {
             uri = new URI(urlString);
@@ -233,8 +239,11 @@ public class UrlService {
         if (uri.getScheme() == null || (!uri.getScheme().equalsIgnoreCase("http") && !uri.getScheme().equalsIgnoreCase("https"))) {
             throw new InvalidUrlException("URL must start with http:// or https://");
         }
-        if (uri.getHost() == null) {
+        if (uri.getHost() == null || uri.getHost().isBlank()) {
             throw new InvalidUrlException("Invalid URL host structure");
+        }
+        if (uri.getPort() > 65535) {
+            throw new InvalidUrlException("Invalid URL port number");
         }
 
         // Block Server-Side Request Forgery (SSRF): reject URLs that resolve to

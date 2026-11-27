@@ -395,5 +395,48 @@ class UrlControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Invalid status filter: INVALID. Allowed values: ALL, ACTIVE, EXPIRED"));
     }
+
+    @Test
+    @DisplayName("POST /api/urls - URL exceeding 2048 chars returns 400 Bad Request")
+    void createShortUrl_TooLong_Returns400() throws Exception {
+        String overLimit = "https://example.com/" + "x".repeat(2050);
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl(overLimit)
+                .build();
+
+        mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verify(urlService, never()).createShortUrl(any());
+    }
+
+    @Test
+    @DisplayName("POST /api/urls - Malformed JSON returns 400 Bad Request instead of 500")
+    void createShortUrl_MalformedJson_Returns400() throws Exception {
+        mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"originalUrl\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/urls/{shortCode}/qr - Non-numeric size parameter returns 400 Bad Request")
+    void getQrCode_InvalidSizeType_Returns400() throws Exception {
+        mockMvc.perform(get("/api/urls/abc123/qr").param("size", "large"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("PUT /api/urls - Unsupported HTTP method returns 405 Method Not Allowed")
+    void putUrls_MethodNotAllowed_Returns405() throws Exception {
+        mockMvc.perform(put("/api/urls"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
+    }
 }
 
