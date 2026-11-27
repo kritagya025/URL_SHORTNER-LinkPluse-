@@ -13,11 +13,11 @@ Content-Type: application/json
 
 ### Request Body
 
-| Field         | Type     | Required | Description                                                         |
-| :------------ | :------- | :------- | :------------------------------------------------------------------ |
-| `originalUrl` | `string` | Yes      | The destination URL to shorten (must include http:// or https://)   |
-| `expiresAt`   | `string` | No       | ISO 8601 expiration timestamp (must be in the future)               |
-| `customAlias` | `string` | No       | Optional custom short code (3–10 alphanumeric chars, non-reserved)  |
+| Field         | Type     | Required | Description                                                                                 |
+| :------------ | :------- | :------- | :------------------------------------------------------------------------------------------ |
+| `originalUrl` | `string` | Yes      | Destination URL to shorten (`http://` or `https://`, max 2,048 chars, public hosts only)    |
+| `expiresAt`   | `string` | No       | ISO 8601 expiration timestamp (must be in the future)                                       |
+| `customAlias` | `string` | No       | Optional custom short code (3-10 alphanumeric chars, non-reserved)                          |
 
 ### Example Request (with Custom Alias)
 
@@ -43,6 +43,15 @@ Content-Type: application/json
 }
 ```
 
+### Rate Limiting Headers
+
+`POST /api/urls` is rate-limited per client IP (default: `30` requests per `60` seconds). Every response includes:
+- `X-RateLimit-Limit`: Maximum requests allowed in the current window
+- `X-RateLimit-Remaining`: Remaining requests before throttling
+- `X-RateLimit-Reset`: Epoch seconds when the current window resets
+
+When exceeded, the API responds with `429 Too Many Requests` and a `Retry-After` header (in seconds).
+
 ---
 
 ## Redirect Short URL
@@ -52,9 +61,9 @@ GET /{shortCode}
 ```
 
 ### Response
-- **302 Found** â€” Redirects to the original URL.
-- **410 Gone** â€” The short URL has expired.
-- **404 Not Found** â€” The short code does not exist.
+- **302 Found** - Redirects to the original URL with `Cache-Control: no-store, no-cache, must-revalidate` and `Pragma: no-cache` headers so expired or deleted links stop redirecting immediately and click counts remain accurate.
+- **410 Gone** - The short URL has expired.
+- **404 Not Found** - The short code does not exist.
 
 ---
 
@@ -68,12 +77,12 @@ GET /api/urls/{shortCode}/stats
 
 ```json
 {
-  "id": 1,
   "originalUrl": "https://www.example.com/very/long/path",
   "shortCode": "aB72xQ",
+  "shortUrl": "http://localhost:8080/aB72xQ",
   "clickCount": 42,
-  "createdAt": "2025-08-22T10:30:00",
-  "expiresAt": "2025-12-31T23:59:59",
+  "createdAt": "2026-10-19T10:30:00",
+  "expiresAt": "2026-12-31T23:59:59",
   "status": "ACTIVE"
 }
 ```
@@ -116,9 +125,9 @@ Generates a PNG image of a square QR code encoding the complete shortened link U
 | `size`    | `integer` | No       | `300`   | Dimension in pixels (width and height clamped between 64–1024)  |
 
 ### Response
-- **200 OK** (`image/png`) — Binary PNG QR code image data.
-- **404 Not Found** — Short code does not exist.
-- **410 Gone** — The short link has expired.
+- **200 OK** (`image/png`) - Binary PNG QR code image data.
+- **404 Not Found** - Short code does not exist.
+- **410 Gone** - The short link has expired.
 
 ---
 
@@ -183,7 +192,7 @@ Bulk deletes all short URL records whose expiration timestamp has elapsed.
 ```
 
 ### Response Codes
-- **200 OK** — Expired links successfully purged (or 0 purged if none expired).
+- **200 OK** - Expired links successfully purged (or 0 purged if none expired).
 
 ---
 
@@ -207,8 +216,8 @@ Operational health and readiness probe endpoint. Intended for Docker healthcheck
 ```
 
 ### Response Codes
-- **200 OK** — Service is operational and database is reachable.
-- **503 Service Unavailable** — Service is degraded or database connection failed.
+- **200 OK** - Service is operational and database is reachable.
+- **503 Service Unavailable** - Service is degraded or database connection failed.
 
 ---
 
@@ -224,10 +233,12 @@ All error responses follow a consistent JSON structure:
 }
 ```
 
-| Status Code | Description                                                |
-| :---------- | :--------------------------------------------------------- |
-| 400         | Invalid URL format or validation failure                   |
-| 404         | Short code not found, or no such route/resource            |
-| 409         | Custom alias already in use (Conflict)                     |
-| 410         | Short URL has expired                                      |
-| 500         | Unexpected server error (details are logged, not returned) |
+| Status Code | Description                                                                          |
+| :---------- | :----------------------------------------------------------------------------------- |
+| 400         | Invalid URL format, SSRF host rejection, length > 2048 chars, malformed JSON, or invalid parameter type |
+| 404         | Short code not found, or no such route/resource                                      |
+| 405         | Unsupported HTTP method for the requested endpoint                                   |
+| 409         | Custom alias already in use (Conflict)                                               |
+| 410         | Short URL has expired                                                                |
+| 429         | Rate limit exceeded on `POST /api/urls` (includes `Retry-After` header)              |
+| 500         | Unexpected server error (details are logged, not returned)                           |

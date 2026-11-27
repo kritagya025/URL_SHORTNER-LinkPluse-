@@ -5,8 +5,8 @@
 ![Spring Boot 3.2.5](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-197MB%20Optimized-2496ED.svg)
-![JaCoCo Coverage](https://img.shields.io/badge/Line%20Coverage-91%25-success.svg)
-![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-90%25-success.svg)
+![JaCoCo Coverage](https://img.shields.io/badge/Line%20Coverage-96%25-success.svg)
+![Tests](https://img.shields.io/badge/Tests-111%20Passing-success.svg)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)
 
 LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Real-Time Analytics Platform** built using **Spring Boot 3**, **Java 17**, **PostgreSQL 16**, **Docker Compose**, **Nginx**, and an automated **GitHub Actions CI/CD Pipeline**.
@@ -40,17 +40,19 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 - **Custom Short Code Aliases**: Supports optional, user-defined custom short codes (3–10 alphanumeric characters) with duplicate collision prevention (`409 Conflict`) and system routing reservation protection.
 - **QR Code Generation & PNG Export**: Built-in `GET /api/urls/{shortCode}/qr` endpoint powered by ZXing, generating high-resolution PNG QR codes (64–1024px) for instant sharing, accompanied by an interactive modal in the frontend dashboard for live preview and one-click PNG downloads.
 - **Search & Lifecycle Status Filtering**: Filter links on both backend and frontend by keyword query (`?query=...`) and status (`?status=ALL|ACTIVE|EXPIRED`), backed by real-time client debouncing and server-side filtering.
-- **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time. Click counts are incremented with a single atomic `UPDATE`, so simultaneous visits to the same link cannot overwrite one another.
+- **HTTP 302 Redirect Engine**: Fast redirection to original destinations while logging visit timestamps in real time. Click counts are incremented with a single atomic `UPDATE`, so simultaneous visits to the same link cannot overwrite one another. Responses include `Cache-Control: no-store, no-cache, must-revalidate` and `Pragma: no-cache` so expired or deleted links stop immediately and repeat clicks remain tracked.
 - **Real-Time Click Analytics & Inspector**: Live click counter auto-updates across dashboard tables and inspector cards every 3 seconds, without page refreshes. Polling pauses while the browser tab is in the background.
 - **Platform Analytics Summary API**: Dedicated `GET /api/urls/analytics/summary` endpoint providing cumulative links, total clicks, active vs expired counts, average clicks, and top-performing link metrics, rendered live in the dashboard toolbar.
-- **OWASP Security Response Headers**: Global `SecurityHeadersFilter` enforces standard defense headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`).
+- **SSRF Protection & URL Bounds**: Rejects URLs resolving to private, loopback (`localhost`, `127.0.0.1`, `::1`), link-local (`169.254.169.254`), CGNAT (`100.64.0.0/10`), IPv6 ULA (`fc00::/7`), `.local`/`.internal` hostnames, or obfuscated numeric/hex/octal IPv4 forms across all DNS records, and caps URLs at 2,048 characters.
+- **Per-IP Rate Limiting**: `RateLimitFilter` throttles `POST /api/urls` per client IP (default 30 req/min, configurable via `app.rate-limit.*`), returning `X-RateLimit-*` headers and HTTP `429 Too Many Requests` with `Retry-After`.
+- **OWASP Security Response Headers & CSP**: Global `SecurityHeadersFilter` enforces standard defense headers (`Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`).
 - **Operational Health Check**: Built-in `/api/health` monitoring probe returns service status and database connectivity for Docker, container orchestration, and uptime monitors.
 - **Expiration Management & Bulk Purging**: Supports custom date/time expiration thresholds. Expired links automatically return `HTTP 410 Gone`, and all expired records can be purged in bulk via `DELETE /api/urls/expired` or via the interactive dashboard.
-- **Dual-Theme Analytics Dashboard**: Light and dark themes with a persisted toggle and a `prefers-color-scheme` default, sortable columns, per-row click bars, relative timestamps, real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), a backend reachability indicator, and link deletion behind an accessible confirmation dialog. Fully responsive, collapsing into stacked cards below 760px.
+- **Dual-Theme Analytics Dashboard**: Light and dark themes with a persisted toggle and a `prefers-color-scheme` default, sortable columns, per-row click bars, relative timestamps, real-time search filtering, copy-to-clipboard, status badges (`Active` / `Expired`), interactive demo mode, skeleton loaders, legal modals (Terms & Privacy), and link deletion behind an accessible confirmation dialog. Fully responsive, collapsing into stacked cards below 760px.
 - **Keyboard & Accessibility Support**: `/` focuses the dashboard filter and `Esc` closes the dialog or clears the filter; sort headers are keyboard-operable with `aria-sort` indicators, focus rings are visible throughout, and a `prefers-reduced-motion` guard disables animations.
-- **Input Validation & Error Handling**: Spring Bean Validation enforces URL formats, while `@ControllerAdvice` standardizes JSON error responses. Unmatched paths return `404`, and unexpected failures return a generic message — internal exception text (SQL, driver and path detail) is logged, never returned.
+- **Input Validation & Error Handling**: Spring Bean Validation enforces URL lengths and formats, while `@ControllerAdvice` standardizes JSON error responses across `400`, `404`, `405`, `409`, `410`, and `500` — internal exception text (SQL, driver and path detail) is logged, never returned.
 - **Ultra-Lean Multi-Stage Docker Architecture**: Uses `jlink` to build a custom 20-module minimal JRE on Alpine 3.21, shrinking image size from 434MB to **197MB** (55% reduction).
-- **Comprehensive Unit & Integration Test Suite**: 94 JUnit 5 tests achieving **98% instruction coverage** and **98% line coverage** via JaCoCo.
+- **Comprehensive Unit & Integration Test Suite**: 111 JUnit 5 tests achieving **96% line coverage** (`410/428` lines) via JaCoCo.
 - **Automated CI/CD Pipeline**: GitHub Actions workflow compiles the code, runs JUnit 5 tests with JaCoCo reports against a throwaway PostgreSQL service container, validates frontend assets, and builds and publishes Docker images.
 
 ---
@@ -61,9 +63,8 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 | :--- | :--- | :--- |
 | **Throughput (50 Concurrency)** | **500 req/sec** | Sustained throughput across GET redirection endpoint |
 | **Mean Response Time** | **80.1 ms** | Average end-to-end redirection latency under load |
-| **Line Coverage (JaCoCo)** | **91%** | 124/137 lines covered across service, controller, and entity layers |
-| **Branch Coverage (JaCoCo)** | **90%** | 27/30 conditional branches covered |
-| **Total Test Suite Count** | **75 tests** | Unit tests + MockMvc API controller integration tests |
+| **Line Coverage (JaCoCo)** | **96%** | 410/428 lines covered across 29 application classes |
+| **Total Test Suite Count** | **111 tests** | Unit tests + MockMvc integration tests across 12 test suites |
 | **Docker Image Footprint** | **197 MB** | 3-stage `jlink` custom JRE + Alpine base (reduced from 434 MB) |
 
 ---
@@ -77,7 +78,7 @@ LinkPulse is a production-ready, interview-grade **Full-Stack URL Shortener & Re
 | **Backend Framework**| Java 17 / Spring Boot 3.2.5 | REST Controllers, Service Layer, Exception Handling, Data JPA |
 | **Database** | PostgreSQL 16 | Relational persistence with indexed short-code lookups |
 | **Connection Pool** | HikariCP | High-performance database connection management |
-| **Testing & Coverage** | JUnit 5, MockMvc & JaCoCo 0.8.12 | 75 unit/integration tests with automated HTML coverage reports |
+| **Testing & Coverage** | JUnit 5, MockMvc & JaCoCo 0.8.12 | 111 unit/integration tests with automated HTML coverage reports |
 | **Containerization** | Docker & Docker Compose | 3-Stage `jlink` minimal JRE container builds & network orchestration |
 | **CI/CD Pipeline** | GitHub Actions | Automated build, test, Docker image building, and Docker Hub registry publishing |
 
@@ -135,17 +136,21 @@ Nginx serves the dashboard directly and proxies two classes of request to the ba
    git clone https://github.com/kritagya025/URL_SHORTNER-LinkPluse-.git
    cd URL_SHORTNER-LinkPluse-
    ```
-2. Build and start all services (`postgres`, `backend`, `frontend`):
+2. Copy `.env.example` to `.env` and set a strong `POSTGRES_PASSWORD`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Build and start all services (`postgres`, `backend`, `frontend`):
    ```bash
    docker compose up --build -d
    ```
-3. Open `http://localhost:80` in your web browser. The backend API is also reachable directly on `http://localhost:8080`.
-4. Tail the logs or check container health:
+4. Open `http://localhost:80` in your web browser. The backend API is also reachable directly on `http://localhost:8080`.
+5. Tail the logs or check container health:
    ```bash
    docker compose ps
    docker compose logs -f backend
    ```
-5. Stop containers while preserving database data:
+6. Stop containers while preserving database data:
    ```bash
    docker compose down
    ```
@@ -189,8 +194,10 @@ All settings are read from environment variables with local-friendly defaults, s
 | `DB_PORT` | `5432` | PostgreSQL port |
 | `DB_NAME` | `url_shortener_db` | Database name |
 | `DB_USERNAME` | `postgres` | Database user |
-| `DB_PASSWORD` | `kritagya` | Database password — override this outside local development |
+| `DB_PASSWORD` | *(empty)* | Database password — must be supplied via `.env` or environment variable |
 | `APP_BASE_URL` | `http://localhost:8080` | Prefix used to build the `shortUrl` returned by the API |
+| `RATE_LIMIT_MAX_REQUESTS` | `30` | Maximum `POST /api/urls` requests per IP within `RATE_LIMIT_WINDOW_MS` |
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Sliding/fixed rate-limit window duration in milliseconds |
 
 Hibernate runs with `spring.jpa.hibernate.ddl-auto=update`, so the `urls` table and its index are created on first start. HikariCP is capped at 10 connections with 5 kept idle.
 
@@ -246,10 +253,12 @@ Every failure returns the same JSON shape:
 
 | Status | Raised when |
 | :--- | :--- |
-| `400 Bad Request` | Blank `originalUrl`, a scheme other than `http`/`https`, a malformed host, an invalid or reserved custom alias, or an expiry in the past |
+| `400 Bad Request` | Blank or >2048-char `originalUrl`, non-`http`/`https` scheme, private/SSRF host, invalid or reserved alias, past expiry, malformed JSON, or invalid parameter type |
 | `404 Not Found` | Unknown short code, or any path that matches no route and no static asset |
+| `405 Method Not Allowed` | Unsupported HTTP method on an existing API route |
 | `409 Conflict` | Requested `customAlias` is already claimed by another active or existing link |
 | `410 Gone` | The link exists but is past its `expiresAt` timestamp |
+| `429 Too Many Requests` | Per-IP creation rate limit exceeded on `POST /api/urls` (includes `Retry-After`) |
 | `500 Internal Server Error` | Unexpected failure — the response carries a generic message while the cause and stack trace stay in the server log |
 
 CORS is open to all origins for `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS` and `HEAD`. The API is stateless and reads no cookies, so credentialed cross-origin requests are deliberately disallowed.
@@ -320,7 +329,7 @@ ENTRYPOINT ["java", \
    - Checkout Repository                    - Checkout Repository
    - Setup Java 17 (Temurin) + Maven cache  - Verify static web assets
    - Start postgres:16-alpine service       - Build frontend Nginx image
-   - mvn clean verify -B (45 JUnit tests)
+   - mvn clean verify -B (111 JUnit tests)
    - Generate JaCoCo Coverage Report
           |                                         |
           └────────────────────┬────────────────────┘
@@ -364,7 +373,7 @@ mvn clean test jacoco:report
 ```
 View the generated coverage report locally at: `target/site/jacoco/index.html`
 
-The suite covers the service layer (19 tests), the API controllers via MockMvc (12), the entity lifecycle (7), unmatched-path handling (4), and short-code generation (3).
+The suite spans 12 test classes (111 tests total) covering `UrlService` (42), `UrlController` (27), `GlobalExceptionHandler` (11), `Url` entity (7), `RateLimitFilter` (5), `RedirectController` (4), `UnknownPathHandling` (4), `QrCodeService` (3), `ShortCodeGenerator` (3), `HealthController` (2), `WebConfig` (2), and `SecurityHeadersFilter` (1).
 
 ### Postman Collection
 Import `URL_Shortener.postman_collection.json` into Postman to test pre-configured API requests:
@@ -383,20 +392,21 @@ Import `URL_Shortener.postman_collection.json` into Postman to test pre-configur
 ```text
 .
 ├── src/main/java/com/urlshortener/
-│   ├── config/           # CORS filter configuration
-│   ├── controller/       # UrlController (REST API) + RedirectController (302s)
+│   ├── config/           # CORS (WebConfig), SecurityHeadersFilter (OWASP + CSP), RateLimitFilter
+│   ├── controller/       # UrlController, RedirectController (302s), HealthController
 │   ├── dto/              # Request/response payloads
 │   ├── entity/           # Url JPA entity
 │   ├── exception/        # Domain exceptions + @ControllerAdvice handler
 │   ├── repository/       # Spring Data JPA repository (atomic click increment)
-│   └── service/          # UrlService business logic + ShortCodeGenerator
+│   └── service/          # UrlService, ShortCodeGenerator, QrCodeService
 ├── src/main/resources/
 │   ├── application.properties
 │   └── static/           # Dashboard served by the backend (mirrors frontend/)
-├── src/test/java/        # 94 JUnit 5 + MockMvc tests
+├── src/test/java/        # 111 JUnit 5 + MockMvc tests
 ├── frontend/             # Nginx-served dashboard (index.html, css/, js/)
 ├── docs/                 # System architecture, API reference, and deployment guide
 ├── .github/workflows/    # CI/CD pipeline
+├── .env.example          # Environment variable template for local and Docker runs
 ├── Dockerfile            # 3-stage jlink backend image
 ├── docker-compose.yml    # postgres + backend + frontend orchestration
 └── render.yaml           # Render Blueprint

@@ -4,6 +4,23 @@ All notable changes to the LinkPulse project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- **SSRF Protection**: Added multi-record DNS resolution and private/loopback/link-local/CGNAT/ULA/obfuscated-IP validation in `UrlService` to block internal network and cloud metadata probes.
+- **Content Security Policy**: Added `Content-Security-Policy` directive to `SecurityHeadersFilter`.
+- **Per-IP Rate Limiting**: Added `RateLimitFilter` throttling `POST /api/urls` (default 30 req/min, configurable via `app.rate-limit.*`) with `X-RateLimit-*`, `Retry-After`, `429` JSON payloads, `X-Forwarded-For` support, and bounded bucket eviction.
+- **Credential Hardening**: Removed hardcoded database passwords from `application.properties` and `docker-compose.yml`, disabled SQL logging in default properties, and introduced `.env.example`.
+
+### Fixed
+- **Redirect Cache Control**: Added `Cache-Control: no-store, no-cache, must-revalidate` and `Pragma: no-cache` headers to `RedirectController` 302 responses so expired or deleted links stop immediately and repeat clicks remain tracked.
+- **URL Length & Port Bounds**: Enforced a 2,048-character maximum on `originalUrl` across `CreateUrlRequest` and `UrlService` (and port range `<= 65535`).
+- **Proper 400 / 405 Error Mapping**: Added `GlobalExceptionHandler` handlers for `HttpMessageNotReadableException` (400), `MethodArgumentTypeMismatchException` (400), and `HttpRequestMethodNotSupportedException` (405) instead of falling back to 500.
+
+### Changed
+- **UI Consistency**: Synchronized `src/main/resources/static/` with `frontend/` (Plus Jakarta Sans font, bespoke brand SVG, demo mode, skeleton loaders, legal modals, and standard hyphen/colon punctuation).
+- **Test Suite Expansion**: Expanded automated test suite to 111 passing JUnit 5 and MockMvc tests with 96% line coverage (`410/428` lines).
+
 ## [1.6.0] - 2026-10-23
 
 ### Added

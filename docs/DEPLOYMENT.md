@@ -88,8 +88,10 @@ Access at: `http://localhost:8080`
 | `POSTGRES_DB`                | `url_shortener_db`       | Database name            |
 | `POSTGRES_USER`              | `postgres`               | Database username        |
 | `DB_PASSWORD`                | *(empty)*                | Spring Boot DB password  |
-| `APP_BASE_URL`               | `http://localhost`       | Public-facing base URL   |
-| `PORT`                       | `8080`                   | Backend server port      |
+| `APP_BASE_URL`               | `http://localhost`       | Public-facing base URL                 |
+| `PORT`                       | `8080`                   | Backend server port                    |
+| `RATE_LIMIT_MAX_REQUESTS`    | `30`                     | Max `POST /api/urls` requests/window   |
+| `RATE_LIMIT_WINDOW_MS`       | `60000`                  | Rate-limit window length in ms         |
 
 ---
 

@@ -24,9 +24,16 @@ Thank you for your interest in contributing to LinkPulse! This document provides
 - Docker & Docker Compose (optional)
 
 ### Running Locally
-```bash
-mvn spring-boot:run
-```
+1. Configure database credentials via environment variables (see `.env.example` for all supported variables):
+   ```bash
+   export DB_USERNAME=postgres
+   export DB_PASSWORD=your_password
+   ```
+2. Start the Spring Boot backend:
+   ```bash
+   mvn spring-boot:run
+   ```
+3. Note: If you modify frontend assets, keep both `frontend/` and `src/main/resources/static/` in sync.
 
 ### Running Tests
 ```bash

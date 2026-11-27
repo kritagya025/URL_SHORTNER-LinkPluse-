@@ -44,10 +44,11 @@ graph TD
 
 | Layer | Component | Primary Responsibility |
 | :--- | :--- | :--- |
-| **Ingress** | Nginx Reverse Proxy | Serves optimized static assets (HTML/CSS/JS), terminates HTTP connections, proxies `/api/*` and short code redirects to Spring Boot backend. |
-| **Web / Controller** | `UrlController`, `RedirectController`, `HealthController` | Validates HTTP payloads, binds path variables, handles CORS preflight checks, returns appropriate HTTP status codes (200, 201, 204, 302, 400, 404, 410, 503). |
-| **Exception Handling** | `GlobalExceptionHandler` | Intercepts validation errors and exceptions across all controllers, mapping them to uniform `ErrorResponse` JSON structures without leaking stack traces or internal schema details. |
-| **Business Logic** | `UrlService`, `ShortCodeGenerator` | Enforces URL formatting rules (scheme, host), handles expiration checks, resolves Base62 code generation with collision backoff, orchestrates transactional updates. |
+| **Ingress** | Nginx Reverse Proxy | Serves static assets (HTML/CSS/JS), terminates HTTP connections, proxies `/api/*` and short code redirects to Spring Boot backend. |
+| **Security & Rate Limit Filters** | `SecurityHeadersFilter`, `RateLimitFilter`, `WebConfig` | Enforces OWASP headers + Content-Security-Policy, applies per-IP fixed-window throttling on `POST /api/urls`, and configures stateless CORS. |
+| **Web / Controller** | `UrlController`, `RedirectController`, `HealthController` | Validates HTTP payloads, binds path variables, emits `Cache-Control: no-store` on 302 redirects, and exposes operational health probes. |
+| **Exception Handling** | `GlobalExceptionHandler` | Intercepts validation, malformed JSON, type mismatch, method-not-allowed, and domain errors, mapping them to uniform `ErrorResponse` JSON without leaking internals. |
+| **Business Logic** | `UrlService`, `ShortCodeGenerator`, `QrCodeService` | Enforces URL syntax, length bounds (2,048 chars), and SSRF protections; handles expirations, Base62 collision retries, and ZXing PNG QR generation. |
 | **Data Access** | `UrlRepository`, `Url` entity | Executes queries against PostgreSQL using Spring Data JPA, handles atomic click incrementation via native JPA `@Modifying` queries. |
 
 ---
@@ -156,10 +157,12 @@ sequenceDiagram
 
 ## 5. Security & Reliability
 
-1. **Information Leakage Prevention**: `GlobalExceptionHandler` intercepts generic `Exception.class` and logs the full stack trace server-side while returning a sanitized `{"status": 500, "message": "An unexpected error occurred"}` response to clients.
-2. **CORS Security**: Cross-Origin Resource Sharing is configured via `WebConfig` using Spring's `CorsFilter`. `allowCredentials(false)` prevents cross-site credential leakage while allowing open API access for decoupled frontends.
-3. **Container Health Probing**: The `/api/health` endpoint verifies both web layer responsiveness and active database connectivity, returning `HTTP 200 (UP)` or `HTTP 503 (DEGRADED)`.
-4. **Input Sanitization**: URLs are parsed and verified using `java.net.URI` to ensure valid HTTP/HTTPS schemes and valid host structures before entering the database.
+1. **Information Leakage Prevention**: `GlobalExceptionHandler` intercepts generic `Exception.class` and logs the full stack trace server-side while returning a sanitized `{"status": 500, "message": "An unexpected error occurred"}` response to clients. Invalid JSON payloads (`HttpMessageNotReadableException`), invalid query parameter types (`MethodArgumentTypeMismatchException`), and unsupported methods (`HttpRequestMethodNotSupportedException`) map to clean 400/405 responses.
+2. **SSRF & Input Bounds Validation**: `UrlService` validates `http`/`https` schemes, caps destination URLs at 2,048 characters, verifies valid port ranges (`<= 65535`), and blocks private, loopback, link-local, multicast, CGNAT (`100.64.0.0/10`), IPv6 ULA (`fc00::/7`), `.local`/`.internal` hostnames, and obfuscated numeric/hex/octal IPv4 targets across all resolved DNS records.
+3. **OWASP Security Headers & CSP**: `SecurityHeadersFilter` attaches `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection`, `Referrer-Policy`, and `Permissions-Policy` to every HTTP response.
+4. **Per-IP Rate Limiting**: `RateLimitFilter` enforces a configurable fixed-window quota on `POST /api/urls` (default 30 requests/minute per client IP via `X-Forwarded-For` / remote address) with `X-RateLimit-*` and `Retry-After` headers and bounded client bucket eviction.
+5. **CORS Security**: Cross-Origin Resource Sharing is configured via `WebConfig` using Spring's `CorsFilter`. `allowCredentials(false)` prevents cross-site credential leakage while allowing open API access for decoupled frontends.
+6. **Container Health Probing**: The `/api/health` endpoint verifies both web layer responsiveness and active database connectivity, returning `HTTP 200 (UP)` or `HTTP 503 (DEGRADED)`.
 
 ---
 
