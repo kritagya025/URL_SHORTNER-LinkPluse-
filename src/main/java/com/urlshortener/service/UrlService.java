@@ -16,8 +16,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -234,6 +236,107 @@ public class UrlService {
         if (uri.getHost() == null) {
             throw new InvalidUrlException("Invalid URL host structure");
         }
+
+        // Block Server-Side Request Forgery (SSRF): reject URLs that resolve to
+        // private, loopback, or link-local addresses so the shortener cannot be
+        // used to probe internal services behind firewalls.
+        rejectPrivateNetworkHost(uri.getHost());
+    }
+
+    /**
+     * Standard strict decimal dotted-quad IPv4 pattern (each octet 0-255, no leading zeros).
+     */
+    private static final java.util.regex.Pattern STANDARD_IPV4_PATTERN = java.util.regex.Pattern.compile(
+            "^(?:0|[1-9]\\d{0,2})(?:\\.(?:0|[1-9]\\d{0,2})){3}$"
+    );
+
+    /**
+     * Matches numeric, hex, or octal IPv4 notations (including integer and shorthand forms).
+     */
+    private static final java.util.regex.Pattern NUMERIC_HOST_PATTERN = java.util.regex.Pattern.compile(
+            "^(?:0[xX][0-9a-fA-F]+|0[0-7]+|\\d+)(?:\\.(?:0[xX][0-9a-fA-F]+|0[0-7]+|\\d+)){0,3}$"
+    );
+
+    /**
+     * Resolves the given hostname and rejects it if it points to a private, loopback,
+     * link-local, or reserved IP address. This prevents SSRF attacks where an attacker
+     * shortens an internal URL (e.g. http://169.254.169.254/latest/meta-data)
+     * and uses the redirect to probe cloud metadata endpoints or internal APIs.
+     */
+    private void rejectPrivateNetworkHost(String host) {
+        String cleanHost = host.trim();
+        if (cleanHost.startsWith("[") && cleanHost.endsWith("]")) {
+            cleanHost = cleanHost.substring(1, cleanHost.length() - 1);
+        }
+        while (cleanHost.endsWith(".")) {
+            cleanHost = cleanHost.substring(0, cleanHost.length() - 1);
+        }
+        if (cleanHost.isEmpty()) {
+            throw new InvalidUrlException("Invalid URL host structure");
+        }
+
+        // Fast-reject well-known private hostnames without DNS resolution
+        String lower = cleanHost.toLowerCase();
+        if (lower.equals("localhost")
+                || lower.endsWith(".localhost")
+                || lower.endsWith(".local")
+                || lower.endsWith(".internal")
+                || lower.endsWith(".localdomain")) {
+            throw new InvalidUrlException("URLs pointing to private or internal network addresses are not allowed");
+        }
+
+        // Reject obfuscated numeric/hex/octal IPv4 forms (e.g. 2130706433, 0x7f000001, 0177.0.0.1, 127.1)
+        if (NUMERIC_HOST_PATTERN.matcher(cleanHost).matches()
+                && !STANDARD_IPV4_PATTERN.matcher(cleanHost).matches()) {
+            throw new InvalidUrlException("URLs pointing to private or obfuscated IP addresses are not allowed");
+        }
+
+        try {
+            InetAddress[] addresses = InetAddress.getAllByName(cleanHost);
+            for (InetAddress address : addresses) {
+                if (isBlockedIpAddress(address)) {
+                    throw new InvalidUrlException("URLs pointing to private or internal network addresses are not allowed");
+                }
+            }
+        } catch (UnknownHostException e) {
+            if (cleanHost.contains(":")) {
+                throw new InvalidUrlException("Invalid IPv6 host structure: " + host);
+            }
+            // Non-IP domain names that do not resolve in the current DNS context (e.g. offline tests)
+            // are allowed after passing hostname and syntax checks above.
+            log.debug("Could not resolve hostname '{}' during SSRF check: {}", cleanHost, e.getMessage());
+        }
+    }
+
+    private boolean isBlockedIpAddress(InetAddress address) {
+        if (address.isLoopbackAddress()
+                || address.isSiteLocalAddress()
+                || address.isLinkLocalAddress()
+                || address.isAnyLocalAddress()
+                || address.isMulticastAddress()) {
+            return true;
+        }
+
+        byte[] bytes = address.getAddress();
+        if (bytes.length == 4) {
+            int b0 = bytes[0] & 0xFF;
+            int b1 = bytes[1] & 0xFF;
+            int b2 = bytes[2] & 0xFF;
+            // 0.0.0.0/8 ("this network"), 100.64.0.0/10 (CGNAT), 127.0.0.0/8 (loopback),
+            // 169.254.0.0/16 (link-local), 192.0.0.0/24 (IETF), 198.18.0.0/15 (benchmark), 240.0.0.0/4 (reserved/broadcast)
+            return b0 == 0
+                    || (b0 == 100 && b1 >= 64 && b1 <= 127)
+                    || b0 == 127
+                    || (b0 == 169 && b1 == 254)
+                    || (b0 == 192 && b1 == 0 && b2 == 0)
+                    || (b0 == 198 && (b1 == 18 || b1 == 19))
+                    || b0 >= 240;
+        }
+        if (bytes.length == 16) {
+            // IPv6 Unique Local Addresses (fc00::/7)
+            return (bytes[0] & 0xFE) == 0xFC;
+        }
+        return false;
     }
 
     private void validateCustomAlias(String customAlias) {

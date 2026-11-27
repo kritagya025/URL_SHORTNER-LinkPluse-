@@ -678,5 +678,64 @@ class UrlServiceTest {
         assertEquals(1, results.size());
         assertEquals("spring1", results.get(0).getShortCode());
     }
+
+    @Test
+    @DisplayName("Create Short URL - Rejects private, loopback, link-local, and metadata SSRF targets")
+    void createShortUrl_PrivateAndInternalTargets_ThrowsInvalidUrlException() {
+        List<String> blockedUrls = List.of(
+                "http://localhost:8080/api/health",
+                "http://localhost./admin",
+                "http://sub.localhost/secret",
+                "http://127.0.0.1:8080/internal",
+                "http://0.0.0.0:8080/",
+                "http://[::1]:8080/",
+                "http://[fd00::1]/private",
+                "http://[fe80::1]/link-local",
+                "http://169.254.169.254/latest/meta-data/",
+                "http://metadata.google.internal/computeMetadata/v1/",
+                "http://service.local/api",
+                "http://10.0.0.1/admin",
+                "http://172.16.0.1/panel",
+                "http://192.168.1.1/router",
+                "http://100.64.0.1/cgnat",
+                "http://2130706433/",
+                "http://0x7f000001/",
+                "http://0177.0.0.1/",
+                "http://127.1/"
+        );
+
+        for (String blockedUrl : blockedUrls) {
+            CreateUrlRequest request = CreateUrlRequest.builder().originalUrl(blockedUrl).build();
+            assertThrows(InvalidUrlException.class,
+                    () -> urlService.createShortUrl(request),
+                    "Expected InvalidUrlException for SSRF target: " + blockedUrl);
+        }
+
+        verify(urlRepository, never()).save(any(Url.class));
+    }
+
+    @Test
+    @DisplayName("Create Short URL - Public IPv4 literal is accepted")
+    void createShortUrl_PublicIp_Success() {
+        CreateUrlRequest request = CreateUrlRequest.builder()
+                .originalUrl("https://8.8.8.8/dns-query")
+                .build();
+
+        when(shortCodeGenerator.generateShortCode()).thenReturn("pub888");
+        when(urlRepository.existsByShortCode("pub888")).thenReturn(false);
+
+        Url savedEntity = Url.builder()
+                .id(10L)
+                .originalUrl("https://8.8.8.8/dns-query")
+                .shortCode("pub888")
+                .clickCount(0L)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(urlRepository.save(any(Url.class))).thenReturn(savedEntity);
+
+        UrlResponse response = urlService.createShortUrl(request);
+        assertEquals("pub888", response.getShortCode());
+    }
 }
 
