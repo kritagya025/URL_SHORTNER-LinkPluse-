@@ -7,9 +7,9 @@ services:
     container_name: url_shortener_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: url_shortener_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: kritagya
+      POSTGRES_DB: ${POSTGRES_DB:-url_shortener_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or environment}
     ports:
       - "5432:5432"
     volumes:
@@ -34,10 +34,10 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: url_shortener_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: kritagya
-      APP_BASE_URL: http://localhost
+      DB_NAME: ${POSTGRES_DB:-url_shortener_db}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or environment}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost}
     ports:
       - "8080:8080"
     depends_on:

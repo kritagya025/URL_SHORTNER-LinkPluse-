@@ -17,6 +17,10 @@ This guide covers deploying LinkPulse to various environments.
 git clone https://github.com/kritagya025/URL_SHORTNER-LinkPluse-.git
 cd URL_SHORTNER-LinkPluse-
 
+# Create your .env file from the template
+cp .env.example .env
+# Edit .env and set a strong POSTGRES_PASSWORD
+
 # Build and start all services
 docker compose up --build -d
 
@@ -59,12 +63,12 @@ CREATE DATABASE url_shortener_db;
 
 ### Configuration
 
-Update `src/main/resources/application.properties`:
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/url_shortener_db
-spring.datasource.username=postgres
-spring.datasource.password=your_password
+Set database credentials via environment variables (never edit `application.properties` directly):
+```bash
+export DB_PASSWORD=your_strong_password
 ```
+
+Or use the `.env` file for Docker Compose deployments (see `.env.example`).
 
 ### Run
 
@@ -80,10 +84,12 @@ Access at: `http://localhost:8080`
 
 | Variable                     | Default                  | Description              |
 | :--------------------------- | :----------------------- | :----------------------- |
-| `SPRING_DATASOURCE_URL`      | `jdbc:postgresql://...`  | Database connection URL  |
-| `SPRING_DATASOURCE_USERNAME` | `postgres`               | Database username        |
-| `SPRING_DATASOURCE_PASSWORD` | `kritagya`               | Database password        |
-| `SERVER_PORT`                | `8080`                   | Backend server port      |
+| `POSTGRES_PASSWORD`          | *(required)*             | Database password        |
+| `POSTGRES_DB`                | `url_shortener_db`       | Database name            |
+| `POSTGRES_USER`              | `postgres`               | Database username        |
+| `DB_PASSWORD`                | *(empty)*                | Spring Boot DB password  |
+| `APP_BASE_URL`               | `http://localhost`       | Public-facing base URL   |
+| `PORT`                       | `8080`                   | Backend server port      |
 
 ---
 
